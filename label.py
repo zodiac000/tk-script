@@ -116,7 +116,7 @@ class ImageLabel:
 
 if __name__ == "__main__":
     il = ImageLabel()
-    il.load_dictionary_from_dict("/home/wenbin/Workspace/tk-script/" + self.saved_dict)
+    il.load_dictionary_from_dict("/home/wenbin/Workspace/tk-script/" + il.saved_dict)
     # il.load_dictionary_from_osdir("/home/wenbin/Workspace/tk-script/images", "/home/wenbin/Workspace/tk-script/" + self.coordinates)
 
     canvas = Canvas(il.root)

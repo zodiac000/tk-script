@@ -14,7 +14,7 @@ AUTOTUNE = tf.data.experimental.AUTOTUNE
 # random.shuffle(all_image_paths)
 # print(len(all_image_paths))
 
-dict_loc = '/home/wenbin/Workspace/tk-script/savedDict'
+dict_loc = '/home/wenbin/Workspace/tk-script/saved_dict.txt'
 with open(dict_loc, 'r') as file:
     lines = file.readlines()
 dicts = {}
@@ -28,7 +28,12 @@ for directory in dicts.keys():
     xys.append(dicts[directory])
     directs.append(directory)
 all_image_paths = directs
+all_image_labels = [xy[0] for xy in xys]
+all_image_x = [xy[0] for xy in xys]
+all_image_y = [xy[1] for xy in xys]
+image_count = len(all_image_paths)
 print(len(all_image_paths))
+print(len(all_image_labels))
 
 img_path = all_image_paths[0]
 print(img_path)
@@ -72,3 +77,23 @@ image_ds = path_ds.map(load_and_preprocess_image, num_parallel_calls=AUTOTUNE)
   # plt.yticks([])
 
 # plt.show()
+
+label_ds = tf.data.Dataset.from_tensor_slices(tf.cast(all_image_labels, tf.int64))
+
+for label in label_ds.take(3):
+    print(label)
+
+ds = tf.data.Dataset.from_tensor_slices((all_image_paths, all_image_x, all_image_y))
+
+def load_and_preprocess_from_path_label(path, x, y):
+    return load_and_preprocess_image(path), x, y
+
+image_label_ds = ds.map(load_and_preprocess_from_path_label)
+print(image_label_ds)
+
+BATCH_SIZE = 32
+ds = image_label_ds.shuffle(buffer_size=image_count)
+ds = ds.repeat()
+ds = ds.batch(BATCH_SIZE)
+ds = ds.prefetch(buffer_size=AUTOTUNE)
+print(ds)
