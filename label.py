@@ -15,6 +15,8 @@ class ImageLabel:
         self.root = Tk()
         self.prevOval = None
         self.current_image = None
+        self.saved_dict = "saved_dict.txt"
+        self.coordinates = "coordinates.txt"
 
     def callback_save_point(self, event):
         msg = "clicked at " + str(event.x) + " " + str(event.y) + "\n"
@@ -43,8 +45,6 @@ class ImageLabel:
             dicts[os.path.join(image_loc, images[i])] = xys[i]
         self.dicts = OrderedDict(sorted(dicts.items(), key=lambda t: t[0]))
         self.load_directs_xys()
-        # with open("dict.txt", 'w') as file:
-            # file.write(json.dumps(dicts))
 
     def load_dictionary_from_dict(self, dict_loc):
         with open(dict_loc, 'r') as file:
@@ -104,11 +104,10 @@ class ImageLabel:
         # self.pointer = 0
 
     def update_coordinates(self, event):
-        target = "savedDict"
-        with open(target, "w") as f:
+        with open(self.saved_dict, "w") as f:
             for index, xy in enumerate(self.xys):
                 f.write(self.directs[index] + "\t" + str(xy[0]) + ", " + str(xy[1]) + "\n")
-        print("xys saved to {}, current picture index is {}".format(target, str(self.pointer)))
+        print("xys saved to {}, current picture index is {}".format(saved_dict, str(self.pointer)))
 
 
     def load_image(self):
@@ -117,8 +116,8 @@ class ImageLabel:
 
 if __name__ == "__main__":
     il = ImageLabel()
-    il.load_dictionary_from_dict("/home/wenbin/Workspace/tk-script/savedDict")
-    # il.load_dictionary_from_osdir("/home/wenbin/Workspace/tk-script/images", "/home/wenbin/Workspace/tk-script/coordinates")
+    il.load_dictionary_from_dict("/home/wenbin/Workspace/tk-script/" + self.saved_dict)
+    # il.load_dictionary_from_osdir("/home/wenbin/Workspace/tk-script/images", "/home/wenbin/Workspace/tk-script/" + self.coordinates)
 
     canvas = Canvas(il.root)
     canvas.pack(expand=YES, fill=BOTH)
