@@ -41,6 +41,7 @@ print(repr(img_raw)[:100]+"...")
 img_tensor = tf.image.decode_image(img_raw)
 print(img_tensor.shape)
 print(img_tensor.dtype)
+print("="*20)
 
 # img_final = tf.image.resize_images(img_tensor, [192, 192])
 # img_final = img_final/255.0
@@ -49,7 +50,7 @@ print(img_tensor.dtype)
 # print(img_final.numpy().max())
 
 def preprocess_image(image):
-  image = tf.image.decode_jpeg(image, channels=3)
+  image = tf.image.decode_jpeg(image, channels=1)
   image = tf.image.resize_images(image, [192, 192])
   image /= 255.0  # normalize to [0,1] range
   return image
@@ -82,7 +83,7 @@ ds = image_label_ds.shuffle(buffer_size=image_count)
 ds = ds.repeat()
 ds = ds.batch(BATCH_SIZE)
 ds = ds.prefetch(buffer_size=AUTOTUNE)
-print(ds)
+print("{}\n ===============".format(ds))
 
 # def change_range(image, x, y):
     # return 2*image-1, x, y
@@ -100,6 +101,7 @@ model.compile(loss=tf.losses.mean_squared_error,
                 optimizer=optimizer,
                 metrics=["accuracy"])
 init = tf.global_variables_initializer()
+print(model.summary())
 with tf.Session() as sess:
     sess.run(init)
 
