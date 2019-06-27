@@ -77,14 +77,23 @@ def load_and_preprocess_from_path_label(path, x):
 
 image_label_ds = ds.map(load_and_preprocess_from_path_label)
 print(image_label_ds)
+ds_test = image_label_ds.take(1000)
+ds_train = image_label_ds.skip(1000)
 
+# import pdb
+# pdb.set_trace()
 BATCH_SIZE = 32
-ds = image_label_ds.shuffle(buffer_size=image_count)
-ds = ds.repeat()
-ds = ds.batch(BATCH_SIZE)
-ds = ds.prefetch(buffer_size=AUTOTUNE)
+ds_train = ds_train.shuffle(buffer_size=image_count - 1000)
+ds_train = ds_train.repeat()
+ds_train = ds_train.batch(BATCH_SIZE)
+ds_train = ds_train.prefetch(buffer_size=AUTOTUNE)
 print("{}\n ===============".format(ds))
 
+ds_test = ds_test.shuffle(buffer_size=1000)
+ds_test = ds_test.repeat()
+ds_test = ds_test.batch(BATCH_SIZE)
+ds_test = ds_test.prefetch(buffer_size=AUTOTUNE)
+print("{}\n ===============".format(ds))
 # def change_range(image, x, y):
     # return 2*image-1, x, y
 # keras_ds = ds.map(change_range)
@@ -97,14 +106,16 @@ model = tf.keras.Sequential([
     ])
 # y_pred = model(ds)
 optimizer = tf.keras.optimizers.RMSprop(0.001)
-model.compile(loss=tf.losses.mean_squared_error,
+model.compile(loss=tf.losses.sigmoid_cross_entropy,
                 optimizer=optimizer,
                 metrics=["accuracy"])
 init = tf.global_variables_initializer()
 print(model.summary())
+tf.reset_default_graph()
 with tf.Session() as sess:
     sess.run(init)
 
+    writer = tf.summary.FileWriter('~/Workspace/tk-script/graphs', sess.graph)
     for epoch in range(10):
-        model.fit(ds, steps_per_epoch=10)
+        model.fit(ds_train, steps_per_epoch=10, validation_data=ds_test)
 
