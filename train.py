@@ -67,8 +67,11 @@ image_ds = path_ds.map(load_and_preprocess_image, num_parallel_calls=AUTOTUNE)
 
 label_ds = tf.data.Dataset.from_tensor_slices(tf.cast(all_image_x, tf.float32))
 
-# for label in label_ds.take(3):
-    # print(label)
+image_ds_test = image_ds.take(1000)
+image_ds_train = image_ds.skip(1000)
+
+label_ds_test = label_ds.take(1000)
+label_ds_train = label_ds.skip(1000)
 
 ds = tf.data.Dataset.from_tensor_slices((all_image_paths, all_image_x, all_image_y))
 
@@ -76,135 +79,127 @@ def load_and_preprocess_from_path_label(path, x, y):
     return load_and_preprocess_image(path), x, y
 
 image_label_ds = ds.map(load_and_preprocess_from_path_label)
-print(image_label_ds)
-ds_test = image_label_ds.take(1000)
-ds_train = image_label_ds.skip(1000)
 
-# import pdb
-# pdb.set_trace()
-BATCH_SIZE = 32
-ds_train = ds_train.shuffle(buffer_size=image_count - 1000)
-ds_train = ds_train.repeat()
-ds_train = ds_train.batch(BATCH_SIZE)
-ds_train = ds_train.prefetch(buffer_size=AUTOTUNE)
-print("{}\n ===============".format(ds))
+epochs = 10
+batch_size = 64
+iterations = len(all_image_paths) * epochs
 
-ds_test = ds_test.shuffle(buffer_size=1000)
-ds_test = ds_test.repeat()
-ds_test = ds_test.batch(BATCH_SIZE)
-ds_test = ds_test.prefetch(buffer_size=AUTOTUNE)
-print("{}\n ===============".format(ds))
-# def change_range(image, x, y):
-    # return 2*image-1, x, y
-# keras_ds = ds.map(change_range)
+# Generate the complete Dataset required in the pipeline
+dataset = image_label_ds.repeat(epochs).batch(batch_size)
+iterator = dataset.make_one_shot_iterator()
 
-# model = tf.keras.Sequential([
-    # tf.keras.layers.Flatten(input_shape=(192,192,1)),
-    # tf.keras.layers.Dense(200, activation=tf.nn.leaky_relu),
-    # tf.keras.layers.Dense(200, activation=tf.nn.leaky_relu),
-    # tf.keras.layers.Dense(1)
-    # ])
+data_X, data_y_x, data_y_y = iterator.get_next()
+data_y_x = tf.cast(data_y_x, tf.float32)
+data_y_y = tf.cast(data_y_y, tf.float32)
 
-# optimizer = tf.keras.optimizers.RMSprop(0.001)
-# model.compile(loss=tf.losses.sigmoid_cross_entropy,
-                # optimizer=optimizer,
-                # metrics=["accuracy"])
-# init = tf.global_variables_initializer()
+# ds_test = image_label_ds.take(1000)
+# ds_train = image_label_ds.skip(1000)
+# BATCH_SIZE = 32
+# ds_train = ds_train.shuffle(buffer_size=image_count - 1000)
+# ds_train = ds_train.repeat()
+# ds_train = ds_train.batch(BATCH_SIZE)
+# ds_train = ds_train.prefetch(buffer_size=AUTOTUNE)
+# print("{}\n ===============".format(ds))
+
+# ds_test = ds_test.shuffle(buffer_size=1000)
+# ds_test = ds_test.repeat()
+# ds_test = ds_test.batch(BATCH_SIZE)
+# ds_test = ds_test.prefetch(buffer_size=AUTOTUNE)
+# print("{}\n ===============".format(ds))
+init = tf.global_variables_initializer()
 # print(model.summary())
 
-
-
-
-# fmap = np.zeros(shape=(7,7,1,2), dtype=np.float32)
-
-# x = tf.placeholder(tf.float32, [None, 224, 224, 1], name='InputData')
-# y = tf.placeholder(tf.float32, [None, 1], name='LabelData')
-
-# feature_maps = tf.Variable(fmap)
-# x = tf.nn.conv2d(x, feature_maps, strides=[1,1,1,1], padding="SAME") 
-# y_pred = model(ds)
-
-# merged_summary_op = tf.summary.merge_all()
 
 graph = build_network(height=224, width=224, channel=1)
 batch_size = 12
 num_epochs = 50
+optimize = graph['optimize']
+cost = graph['cost']
+x = graph['x']
+y = graph['y']
+
+display_epoch = 1
+# Create a summary to monitor cost tensor
+tf.summary.scalar("loss", cost)
 
 
 tf.reset_default_graph()
 with tf.Session() as sess:
-    sess.run(init)
+    # sess.run(init)
 
-    writer = tf.summary.FileWriter('~/Workspace/tk-script/graphs', grapth=tf.get_default_graph())
+    writer = tf.summary.FileWriter('~/Workspace/tk-script/graphs', graph=tf.get_default_graph())
     for epoch in range(10):
         avg_cost = 0
         total_batch = int(len(all_image_paths)/BATCH_SIZE)
+        for data in ds_train.__iter__():
 
         for i in range(total_batch):
-            batch_input, batch_out_x, batch_out_y = ds_train.next_batch(BATCH_SIZE)
-            c, summary = sess.run([cost, merged_summary_op], feed_dect={x:batch_input, y:[batch_out_x, batch_out_y]})
+            # batch_input, batch_out_x, batch_out_y = ds_train.next_batch(BATCH_SIZE)
+            # c, opt = sess.run([cost, optimize], feed_dect={x:batch_input, y:[batch_out_x, batch_out_y]})
+            c, opt = sess.run([cost, optimize], feed_dect={x:image_ds_train[i], y:label_ds_train[i]})
 
-            writer.add_summary(summary, epoch * total_batch + i)
+            writer.add_summary(c, epoch * total_batch + i)
             avg_cost += c / total_batch
         # model.fit(ds_train, steps_per_epoch=10, validation_data=ds_test)
 
+        if (epoch+1) % display_epoch == 0:
+            print("Epoch:", '%04d' % (epoch+1), "cost=", "{:.9f}".format(avg_cost))
+
+# def train_network(graph, batch_size, num_epochs, pb_file_path):
+    # init = tf.global_variables_initializer()
+    # with tf.Session() as sess:
+        # sess.run(init)
+        # epoch_delta = 2
+        # for epoch_index in range(num_epochs):
+            # for i in range(12):
+                # sess.run([graph['optimize']], feed_dict={
+                    # graph['x']: np.reshape(x_train[i], (1, 224, 224, 3)),
+                    # graph['y']: ([[1, 0]] if y_train[i] == 0 else [[0, 1]])
+                # })
+            # if epoch_index % epoch_delta == 0:
+                # total_batches_in_train_set = 0
+                # total_correct_times_in_train_set = 0
+                # total_cost_in_train_set = 0.
+                # for i in range(12):
+                    # return_correct_times_in_batch = sess.run(graph['correct_times_in_batch'], feed_dict={
+                        # graph['x']: np.reshape(x_train[i], (1, 224, 224, 3)),
+                        # graph['y']: ([[1, 0]] if y_train[i] == 0 else [[0, 1]])
+                    # })
+                    # mean_cost_in_batch = sess.run(graph['cost'], feed_dict={
+                        # graph['x']: np.reshape(x_train[i], (1, 224, 224, 3)),
+                        # graph['y']: ([[1, 0]] if y_train[i] == 0 else [[0, 1]])
+                    # })
+                    # total_batches_in_train_set += 1
+                    # total_correct_times_in_train_set += return_correct_times_in_batch
+                    # total_cost_in_train_set += (mean_cost_in_batch * batch_size)
 
 
-def train_network(graph, batch_size, num_epochs, pb_file_path):
-    init = tf.global_variables_initializer()
-    with tf.Session() as sess:
-        sess.run(init)
-        epoch_delta = 2
-        for epoch_index in range(num_epochs):
-            for i in range(12):
-                sess.run([graph['optimize']], feed_dict={
-                    graph['x']: np.reshape(x_train[i], (1, 224, 224, 3)),
-                    graph['y']: ([[1, 0]] if y_train[i] == 0 else [[0, 1]])
-                })
-            if epoch_index % epoch_delta == 0:
-                total_batches_in_train_set = 0
-                total_correct_times_in_train_set = 0
-                total_cost_in_train_set = 0.
-                for i in range(12):
-                    return_correct_times_in_batch = sess.run(graph['correct_times_in_batch'], feed_dict={
-                        graph['x']: np.reshape(x_train[i], (1, 224, 224, 3)),
-                        graph['y']: ([[1, 0]] if y_train[i] == 0 else [[0, 1]])
-                    })
-                    mean_cost_in_batch = sess.run(graph['cost'], feed_dict={
-                        graph['x']: np.reshape(x_train[i], (1, 224, 224, 3)),
-                        graph['y']: ([[1, 0]] if y_train[i] == 0 else [[0, 1]])
-                    })
-                    total_batches_in_train_set += 1
-                    total_correct_times_in_train_set += return_correct_times_in_batch
-                    total_cost_in_train_set += (mean_cost_in_batch * batch_size)
+                # total_batches_in_test_set = 0
+                # total_correct_times_in_test_set = 0
+                # total_cost_in_test_set = 0.
+                # for i in range(3):
+                    # return_correct_times_in_batch = sess.run(graph['correct_times_in_batch'], feed_dict={
+                        # graph['x']: np.reshape(x_val[i], (1, 224, 224, 3)),
+                        # graph['y']: ([[1, 0]] if y_val[i] == 0 else [[0, 1]])
+                    # })
+                    # mean_cost_in_batch = sess.run(graph['cost'], feed_dict={
+                        # graph['x']: np.reshape(x_val[i], (1, 224, 224, 3)),
+                        # graph['y']: ([[1, 0]] if y_val[i] == 0 else [[0, 1]])
+                    # })
+                    # total_batches_in_test_set += 1
+                    # total_correct_times_in_test_set += return_correct_times_in_batch
+                    # total_cost_in_test_set += (mean_cost_in_batch * batch_size)
 
-
-                total_batches_in_test_set = 0
-                total_correct_times_in_test_set = 0
-                total_cost_in_test_set = 0.
-                for i in range(3):
-                    return_correct_times_in_batch = sess.run(graph['correct_times_in_batch'], feed_dict={
-                        graph['x']: np.reshape(x_val[i], (1, 224, 224, 3)),
-                        graph['y']: ([[1, 0]] if y_val[i] == 0 else [[0, 1]])
-                    })
-                    mean_cost_in_batch = sess.run(graph['cost'], feed_dict={
-                        graph['x']: np.reshape(x_val[i], (1, 224, 224, 3)),
-                        graph['y']: ([[1, 0]] if y_val[i] == 0 else [[0, 1]])
-                    })
-                    total_batches_in_test_set += 1
-                    total_correct_times_in_test_set += return_correct_times_in_batch
-                    total_cost_in_test_set += (mean_cost_in_batch * batch_size)
-
-                acy_on_test  = total_correct_times_in_test_set / float(total_batches_in_test_set * batch_size)
-                acy_on_train = total_correct_times_in_train_set / float(total_batches_in_train_set * batch_size)
-                print('Epoch - {:2d}, acy_on_test:{:6.2f}%({}/{}),loss_on_test:{:6.2f}, acy_on_train:{:6.2f}%({}/{}),loss_on_train:{:6.2f}'.format(epoch_index, acy_on_test*100.0,total_correct_times_in_test_set,
-                                                                                                                                                   total_batches_in_test_set * batch_size,
-                                                                                                                                                   total_cost_in_test_set,
-                                                                                                                                                   acy_on_train * 100.0,
-                                                                                                                                                   total_correct_times_in_train_set,
-                                                                                                                                                   total_batches_in_train_set * batch_size,
-                                                                                                                                                   total_cost_in_train_set))
-            constant_graph = graph_util.convert_variables_to_constants(sess, sess.graph_def, ["output"])
-            with tf.gfile.FastGFile(pb_file_path, mode='wb') as f:
-                f.write(constant_graph.SerializeToString())
+                # acy_on_test  = total_correct_times_in_test_set / float(total_batches_in_test_set * batch_size)
+                # acy_on_train = total_correct_times_in_train_set / float(total_batches_in_train_set * batch_size)
+                # print('Epoch - {:2d}, acy_on_test:{:6.2f}%({}/{}),loss_on_test:{:6.2f}, acy_on_train:{:6.2f}%({}/{}),loss_on_train:{:6.2f}'.format(epoch_index, acy_on_test*100.0,total_correct_times_in_test_set,
+                                                                                                                                                   # total_batches_in_test_set * batch_size,
+                                                                                                                                                   # total_cost_in_test_set,
+                                                                                                                                                   # acy_on_train * 100.0,
+                                                                                                                                                   # total_correct_times_in_train_set,
+                                                                                                                                                   # total_batches_in_train_set * batch_size,
+                                                                                                                                                   # total_cost_in_train_set))
+            # constant_graph = graph_util.convert_variables_to_constants(sess, sess.graph_def, ["output"])
+            # with tf.gfile.FastGFile(pb_file_path, mode='wb') as f:
+                # f.write(constant_graph.SerializeToString())
 
