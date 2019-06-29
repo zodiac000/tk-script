@@ -34,13 +34,12 @@ c = 1
     
 
     
-# LeNet-5 model
 class Model:
     def __init__(self, data_X, data_y_x, data_y_y):
         # self.n_class = 10
         self._create_architecture(data_X, data_y_x, data_y_y)
 
-    def _create_architecture(self, data_X, data_y):
+    def _create_architecture(self, data_X, data_y_x, data_y_y):
         # y_hot = tf.one_hot(data_y, depth = self.n_class)
         x_pred, y_pred = self._create_model(data_X)
         # predictions = tf.argmax(logits, 1, output_type = tf.int32)
@@ -48,7 +47,10 @@ class Model:
                                                                               # logits = logits))
         # self.optimizer = tf.train.AdamOptimizer(learning_rate = 0.001).minimize(self.loss)
         # self.accuracy = tf.reduce_sum(tf.cast(tf.equal(predictions, data_y), tf.float32))
-        self.cost = tf.reduce_mean(tf.losses.mean_squared_error(y, x_pred))
+        import pdb
+        # pdb.set_trace()
+        self.cost = tf.reduce_sum(tf.pow(data_y_x - x_pred, 2))/2
+        # self.cost = tf.reduce_mean(tf.losses.mean_squared_error(data_y_x, x_pred))
         self.optimize = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(self.cost)
 
     def _create_model(self, x):
@@ -148,11 +150,10 @@ class Model:
 
         #fc8
         with tf.name_scope('fc8') as scope:
-            kernel = self.weight_variable([4096, 2])
-            biases = self.bias_variable([2])
+            kernel = self.weight_variable([4096, 3])
+            biases = self.bias_variable([3])
             output_fc8 = tf.nn.relu(self.fc(output_fc7, kernel, biases), name=scope)
 
-        # v_pred = tf.nn.sigmoid(output_fc8[0], name="sigmoid")
         x_pred = tf.nn.sigmoid(output_fc8[0], name='x_pred')
         y_pred = tf.nn.sigmoid(output_fc8[1], name='y_pred')
 
