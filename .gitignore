@@ -1,3 +1,4 @@
 images/*
 check_points/*
 logs/*
+__pycache__/*
