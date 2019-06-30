@@ -1,7 +1,7 @@
 import tensorflow as tf
 import pandas as pd
 from model import create_model
-from get_data import get_ds
+from dataset import get_ds
 
 
 # tf.enable_eager_execution()

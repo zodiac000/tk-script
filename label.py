@@ -15,8 +15,9 @@ class ImageLabel:
         self.root = Tk()
         self.prevOval = None
         self.current_image = None
-        self.saved_dict = "saved_dict.txt"
+        self.saved_dict = "saved_dict.csv"
         self.coordinates = "coordinates.txt"
+        self.pred_dict = "pred_dict.csv"
 
     def callback_save_point(self, event):
         msg = "clicked at " + str(event.x) + " " + str(event.y) + "\n"
@@ -51,9 +52,8 @@ class ImageLabel:
             lines = file.readlines()
         self.dicts = {}
         for line in lines:
-            splited = line.split("\t")
-            xy = splited[1].split(",")
-            self.dicts[splited[0]] = (int(xy[0]), int(xy[1]))
+            splited = line.split(",")
+            self.dicts[splited[0]] = (int(splited[1]), int(splited[2]))
         # self.dicts = OrderedDict(sorted(self.dicts.items(), key=lambda t: t[0]))
         self.load_directs_xys()
             
@@ -106,7 +106,7 @@ class ImageLabel:
     def update_coordinates(self, event):
         with open(self.saved_dict, "w") as f:
             for index, xy in enumerate(self.xys):
-                f.write(self.directs[index] + "\t" + str(xy[0]) + ", " + str(xy[1]) + "\n")
+                f.write(self.directs[index] + "," + str(xy[0]) + "," + str(xy[1]) + "\n")
         print("xys saved to {}, current picture index is {}".format(saved_dict, str(self.pointer)))
 
 
@@ -116,7 +116,8 @@ class ImageLabel:
 
 if __name__ == "__main__":
     il = ImageLabel()
-    il.load_dictionary_from_dict("/home/wenbin/Workspace/tk-script/" + il.saved_dict)
+    # il.load_dictionary_from_dict("/home/wenbin/Workspace/tk-script/" + il.saved_dict)
+    il.load_dictionary_from_dict("/home/wenbin/Workspace/tk-script/" + il.pred_dict)
     # il.load_dictionary_from_osdir("/home/wenbin/Workspace/tk-script/images", "/home/wenbin/Workspace/tk-script/" + self.coordinates)
 
     canvas = Canvas(il.root)

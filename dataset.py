@@ -12,15 +12,9 @@ def load_and_preprocess_from_path_label(path, x, y):
     return load_and_preprocess_image(path), tf.stack([x, y])
 
 def get_ds():
-    dict_loc = '/home/wenbin/Workspace/tk-script/saved_dict.csv'
-    data = pd.read_csv(dict_loc, names=['path', 'x', 'y'])
-    all_image_paths = data.path.tolist()
-    all_x = [int(x)/1280.0 for x in data.x.tolist()]
-    all_y = [int(y)/1024.0 for y in data.y.tolist()]
-    image_count = len(all_image_paths)
-
+    all_image_paths, all_x, all_y = get_data()
     AUTOTUNE = tf.data.experimental.AUTOTUNE
-
+    image_count = len(all_image_paths)
     image_label_ds = tf.data.Dataset.from_tensor_slices((all_image_paths, 
                                                          tf.cast(all_x, tf.float32),
                                                          tf.cast(all_y, tf.float32)))
@@ -41,6 +35,14 @@ def get_ds():
                             .prefetch(buffer_size=AUTOTUNE)
     return ds_train, ds_test
 
+def get_data():
+    dict_loc = '/home/wenbin/Workspace/tk-script/pred_dict.csv'
+    data = pd.read_csv(dict_loc, names=['path', 'x', 'y'])
+    all_image_paths = data.path.tolist()
+    all_x = [int(x)/1280.0 for x in data.x.tolist()]
+    all_y = [int(y)/1024.0 for y in data.y.tolist()]
+    
+    return all_image_paths, all_x, all_y
 
 if __name__ == "__main__":
     ds_train, ds_test = get_ds()
