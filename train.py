@@ -11,7 +11,7 @@ batch_size = 40
 epochs = 10
 
 model = create_model()
-model.summary()
+# model.summary()
 
 ds_train, ds_test = get_ds(dict_loc, batch_size, epochs)
 

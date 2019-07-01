@@ -6,14 +6,14 @@ from model import create_model
 
 batch_size = 32
 pred_dict = "pred_dict.csv"
+dict_loc = 'saved_dict.csv'
 
-
-_, ds_test = get_ds(batch_size)
+_, ds_test = get_ds(dict_loc, batch_size, 1)
 ds_test = ds_test.take(1)
 
 model = create_model()
 model.summary()
-model.load_weights('check_points/mymodel.h5')
+model.load_weights('check_points/mymodel_8.h5')
 
 all_image_paths, all_x, all_y = get_data(pred_dict)
 predictions = [model.predict(x) for x in ds_test]

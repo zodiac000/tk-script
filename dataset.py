@@ -4,6 +4,8 @@ import tensorflow as tf
 def load_and_preprocess_image(path):
   image = tf.io.read_file(path)
   image = tf.image.decode_jpeg(image, channels=1)
+  # image = tf.image.random_brightness(image, 0.05)
+  # image = tf.image.random_contrast(image, 0.7, 1.3)
   image = tf.image.resize(image, [224, 224])
   image /= 255.0  # normalize to [0,1] range
   return image
