@@ -11,10 +11,11 @@ def load_and_preprocess_image(path):
 def load_and_preprocess_from_path_label(path, x, y):
     return load_and_preprocess_image(path), tf.stack([x, y])
 
-def get_ds():
-    all_image_paths, all_x, all_y = get_data()
+def get_ds(dict_loc, batch_size, epochs):
+    all_image_paths, all_x, all_y = get_data(dict_loc)
     AUTOTUNE = tf.data.experimental.AUTOTUNE
     image_count = len(all_image_paths)
+    print('image_count: {}'.format(image_count))
     image_label_ds = tf.data.Dataset.from_tensor_slices((all_image_paths, 
                                                          tf.cast(all_x, tf.float32),
                                                          tf.cast(all_y, tf.float32)))
@@ -22,10 +23,10 @@ def get_ds():
 
     image_label_ds = image_label_ds.map(load_and_preprocess_from_path_label)
 
-    batch_size = 32
-    epochs = 10
-
-    ds_train = image_label_ds.skip(1000).shuffle(buffer_size=image_count) \
+    # batch_size = 32
+    # epochs = 10
+    print('image_count: {}'.format(image_count))
+    ds_train = image_label_ds.skip(1000).shuffle(buffer_size=image_count - 1000) \
                              .repeat(epochs) \
                              .batch(batch_size) \
                              .prefetch(buffer_size=AUTOTUNE)
@@ -33,10 +34,9 @@ def get_ds():
     ds_test = image_label_ds.take(1000) \
                             .batch(batch_size) \
                             .prefetch(buffer_size=AUTOTUNE)
-    return ds_train, ds_test
+    return ds_train, ds_test 
 
-def get_data():
-    dict_loc = '/home/wenbin/Workspace/tk-script/pred_dict.csv'
+def get_data(dict_loc):
     data = pd.read_csv(dict_loc, names=['path', 'x', 'y'])
     all_image_paths = data.path.tolist()
     all_x = [int(x)/1280.0 for x in data.x.tolist()]

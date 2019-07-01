@@ -2,15 +2,18 @@ import tensorflow as tf
 import pandas as pd
 from model import create_model
 from dataset import get_ds
-
+import pdb
 
 # tf.enable_eager_execution()
+
+dict_loc = 'saved_dict.csv'
+batch_size = 40
+epochs = 10
 
 model = create_model()
 model.summary()
 
-ds_train, ds_test = get_ds()
-
+ds_train, ds_test = get_ds(dict_loc, batch_size, epochs)
 
 tensorboard_cb = tf.keras.callbacks.TensorBoard(update_freq='batch')
 callbacks = [
@@ -21,5 +24,5 @@ callbacks = [
         monitor='val_loss',
         verbose=1)
 ]
-model.fit(ds_train, epochs=5, validation_data=ds_test, callbacks=callbacks)
+model.fit(ds_train, epochs=epochs, validation_data=ds_test, callbacks=callbacks)
 
