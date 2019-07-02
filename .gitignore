@@ -2,3 +2,4 @@ images/*
 check_points/*
 logs/*
 __pycache__/*
+pred_images/*

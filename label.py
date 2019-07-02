@@ -3,6 +3,8 @@ from PIL import ImageTk, Image
 import os
 import re
 from collections import OrderedDict
+import pyscreenshot as ImageGrab
+
 
 class ImageLabel:
     def __init__(self):
@@ -110,6 +112,12 @@ class ImageLabel:
         img = ImageTk.PhotoImage(Image.open(self.directs[self.pointer]))
         self.current_image = img
 
+    def save_image(self, event):
+        file_name = "pred_images/saved_test_{}.jpg".format(str(self.pointer))
+        ImageGrab.grab(bbox=(10,10,1300,1300)).save(file_name)
+        print("image saved to {}".format(file_name))
+
+
 if __name__ == "__main__":
     il = ImageLabel()
     # il.load_dictionary_from_osdir("images", self.coordinates) # 1. load from original coodinates
@@ -125,4 +133,5 @@ if __name__ == "__main__":
     il.root.bind("<Left>", il.callback_previous)
     il.root.bind("<Right>", il.callback_next)
     il.root.bind("<space>", il.update_coordinates)
+    il.root.bind("<Return>", il.save_image)
     il.root.mainloop()
