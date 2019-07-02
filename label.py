@@ -2,9 +2,7 @@ from tkinter import *
 from PIL import ImageTk, Image
 import os
 import re
-# import json
 from collections import OrderedDict
-# import pdb
 
 class ImageLabel:
     def __init__(self):
@@ -37,7 +35,6 @@ class ImageLabel:
     def load_dictionary_from_osdir(self, image_loc, xy_loc):
         images = os.listdir(image_loc)
         images = list(filter(lambda x: re.search("\.jpg$", x), images)) 
-        # images = sorted(list(filter(lambda x: re.search("\.jpg$", x), images)))
         xys = self.read_xys_from_file(xy_loc)
         lens = len(images) if len(images) < len(xys) else len(xys)
         print("{} images has been loaded".format(str(lens)))
@@ -115,9 +112,9 @@ class ImageLabel:
 
 if __name__ == "__main__":
     il = ImageLabel()
-    # il.load_dictionary_from_dict(il.saved_dict)
-    il.load_dictionary_from_dict(il.pred_dict)
-    # il.load_dictionary_from_osdir("images", self.coordinates)
+    # il.load_dictionary_from_osdir("images", self.coordinates) # 1. load from original coodinates
+    # il.load_dictionary_from_dict(il.saved_dict) #-------------- 2. load from corrected local dictionary
+    il.load_dictionary_from_dict(il.pred_dict) # -----------------3. load from prediected dictionary
 
     canvas = Canvas(il.root)
     canvas.pack(expand=YES, fill=BOTH)

@@ -14,7 +14,7 @@ ds_test = ds_test.take(1)
 
 model = create_model()
 model.summary()
-model.load_weights('check_points/mymodel_2.h5')
+model.load_weights('check_points/mymodel.h5')
 
 all_image_paths, all_x, all_y = get_data(saved_dict)
 predictions = [model.predict(x) for x in ds_test]

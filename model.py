@@ -1,9 +1,13 @@
 from tensorflow.keras import datasets, layers, models
 
+# SHAPE = 324
+SHAPE = 512
+
+
 def create_model():
     model = models.Sequential()
     # model.add(layers.BatchNormalization())
-    model.add(layers.Conv2D(32, (3, 3), input_shape=(324, 324, 1)))
+    model.add(layers.Conv2D(32, (3, 3), input_shape=(SHAPE, SHAPE, 1)))
     # model.add(layers.BatchNormalization())
     model.add(layers.Activation('relu'))
     model.add(layers.MaxPooling2D((2, 2)))
@@ -23,8 +27,9 @@ def create_model():
 
     model.add(layers.Flatten())
     model.add(layers.Dense(64, activation='relu'))
+    model.add(layers.Dense(64, activation='relu'))
     model.add(layers.Dense(32, activation='relu'))
-    # model.add(layers.Dense(128, activation='relu'))
+    model.add(layers.Dense(32, activation='relu'))
     model.add(layers.Dense(2, activation='sigmoid'))
 
     model.compile(optimizer='adam',
