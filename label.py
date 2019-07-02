@@ -54,7 +54,6 @@ class ImageLabel:
         for line in lines:
             splited = line.split(",")
             self.dicts[splited[0]] = (int(splited[1]), int(splited[2]))
-        # self.dicts = OrderedDict(sorted(self.dicts.items(), key=lambda t: t[0]))
         self.load_directs_xys()
             
 
@@ -116,9 +115,9 @@ class ImageLabel:
 
 if __name__ == "__main__":
     il = ImageLabel()
-    # il.load_dictionary_from_dict("/home/wenbin/Workspace/tk-script/" + il.saved_dict)
-    il.load_dictionary_from_dict("/home/wenbin/Workspace/tk-script/" + il.pred_dict)
-    # il.load_dictionary_from_osdir("/home/wenbin/Workspace/tk-script/images", "/home/wenbin/Workspace/tk-script/" + self.coordinates)
+    # il.load_dictionary_from_dict(il.saved_dict)
+    il.load_dictionary_from_dict(il.pred_dict)
+    # il.load_dictionary_from_osdir("images", self.coordinates)
 
     canvas = Canvas(il.root)
     canvas.pack(expand=YES, fill=BOTH)
