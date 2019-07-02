@@ -3,7 +3,7 @@ from tensorflow.keras import datasets, layers, models
 def create_model():
     model = models.Sequential()
     # model.add(layers.BatchNormalization())
-    model.add(layers.Conv2D(32, (3, 3), input_shape=(224, 224, 1)))
+    model.add(layers.Conv2D(32, (3, 3), input_shape=(324, 324, 1)))
     # model.add(layers.BatchNormalization())
     model.add(layers.Activation('relu'))
     model.add(layers.MaxPooling2D((2, 2)))

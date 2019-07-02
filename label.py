@@ -88,7 +88,7 @@ class ImageLabel:
 
     def auto_paint(self):
         python_red = "#FF0000"
-        print(self.xys[self.pointer])
+        print("{}---{}".format(str(self.pointer + 1), str(self.xys[self.pointer])))
         x1, y1 = self.xys[self.pointer][0]-3, self.xys[self.pointer][1]-3
         x2, y2 = self.xys[self.pointer][0]+3, self.xys[self.pointer][1]+3
         canvas.create_oval(x1, y1, x2, y2, fill=python_red)

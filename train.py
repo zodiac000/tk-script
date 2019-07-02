@@ -7,13 +7,13 @@ import pdb
 # tf.enable_eager_execution()
 
 dict_loc = 'saved_dict.csv'
-batch_size = 40
-epochs = 10
+epochs = 30
+batch_size = 8
 
 model = create_model()
-# model.summary()
+model.summary()
 
-ds_train, ds_test = get_ds(dict_loc, batch_size, epochs)
+ds_train, ds_test = get_ds(dict_loc, epochs, batch_size)
 
 tensorboard_cb = tf.keras.callbacks.TensorBoard(update_freq='batch')
 callbacks = [

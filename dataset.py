@@ -6,14 +6,14 @@ def load_and_preprocess_image(path):
   image = tf.image.decode_jpeg(image, channels=1)
   # image = tf.image.random_brightness(image, 0.05)
   # image = tf.image.random_contrast(image, 0.7, 1.3)
-  image = tf.image.resize(image, [224, 224])
+  image = tf.image.resize(image, [324, 324])
   image /= 255.0  # normalize to [0,1] range
   return image
 
 def load_and_preprocess_from_path_label(path, x, y):
     return load_and_preprocess_image(path), tf.stack([x, y])
 
-def get_ds(dict_loc, batch_size, epochs):
+def get_ds(dict_loc, epochs, batch_size):
     all_image_paths, all_x, all_y = get_data(dict_loc)
     AUTOTUNE = tf.data.experimental.AUTOTUNE
     image_count = len(all_image_paths)
@@ -25,8 +25,6 @@ def get_ds(dict_loc, batch_size, epochs):
 
     image_label_ds = image_label_ds.map(load_and_preprocess_from_path_label)
 
-    # batch_size = 32
-    # epochs = 10
     print('image_count: {}'.format(image_count))
     ds_train = image_label_ds.skip(1000).shuffle(buffer_size=image_count - 1000) \
                              .repeat(epochs) \
