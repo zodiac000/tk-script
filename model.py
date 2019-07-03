@@ -1,13 +1,13 @@
 from tensorflow.keras import datasets, layers, models
 
-# SHAPE = 324
-SHAPE = 512
+# input_shape = 324
+input_shape = 512
 
 
 def create_model():
     model = models.Sequential()
     # model.add(layers.BatchNormalization())
-    model.add(layers.Conv2D(32, (3, 3), input_shape=(SHAPE, SHAPE, 1)))
+    model.add(layers.Conv2D(32, (3, 3), input_shape=(input_shape, input_shape, 1)))
     # model.add(layers.BatchNormalization())
     model.add(layers.Activation('relu'))
     model.add(layers.MaxPooling2D((2, 2)))
