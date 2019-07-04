@@ -8,7 +8,7 @@ import pdb
 
 dict_loc = 'saved_dict.csv'
 epochs = 30
-batch_size = 4
+batch_size = 32
 
 model = create_model()
 model.summary()
