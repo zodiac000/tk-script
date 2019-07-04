@@ -23,7 +23,11 @@ def load_and_preprocess_from_path_label(path, x, y, flag):
     x_delta, y_delta = generate_random_bbox()
     image = tf.image.crop_to_bounding_box(image, int(x_delta), int(y_delta), input_size, input_size)
     image = tf.cast(image, tf.float32) / 255.0
-    
+    x = x.numpy() - x_delta
+    if x < 0:
+        flag = tf.convert_to_tensor(0.0)
+    x = tf.convert_to_tensor(x)
+    # pdb.set_trace() 
     # x_new = x - x_delta
     # print(x)
     # print(type(x))

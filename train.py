@@ -4,7 +4,7 @@ from model import create_model
 from dataset import get_ds
 import pdb
 
-# tf.enable_eager_execution()
+tf.compat.v1.enable_eager_execution()
 
 dict_loc = 'saved_dict.csv'
 epochs = 30
