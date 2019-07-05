@@ -78,6 +78,8 @@ def create_model2():
         fc1 = tf.compat.v1.layers.dense(conv3_flat, 64, activation=tf.nn.relu, name="fc1")
     with tf.name_scope("fc2"):
         logits = tf.compat.v1.layers.dense(fc1, 3, name="output")
+
+    return X, y
 if __name__ == "__main__":
     model = create_model()
 
