@@ -27,9 +27,9 @@ def create_model():
 
     model.add(layers.Flatten())
     model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(32, activation='relu'))
-    model.add(layers.Dense(32, activation='relu'))
+    # model.add(layers.Dense(64, activation='relu'))
+    # model.add(layers.Dense(32, activation='relu'))
+    # model.add(layers.Dense(32, activation='relu'))
     model.add(layers.Dense(2, activation='sigmoid'))
 
     model.compile(optimizer='adam',
