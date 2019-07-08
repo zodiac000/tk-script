@@ -45,7 +45,11 @@ def get_ds(dict_loc, epochs, batch_size):
     image_label_ds = image_label_ds.map(load_and_preprocess_from_path_label)
 
     print('image_count: {}'.format(image_count))
-    ds_train = image_label_ds.skip(1000).shuffle(buffer_size=image_count - 1000) \
+    # ds_train = image_label_ds.skip(1000).shuffle(buffer_size=image_count - 1000) \
+                             # .repeat(epochs) \
+                             # .batch(batch_size) \
+                             # .prefetch(buffer_size=AUTOTUNE)
+    ds_train = image_label_ds.skip(1000) \
                              .repeat(epochs) \
                              .batch(batch_size) \
                              .prefetch(buffer_size=AUTOTUNE)
