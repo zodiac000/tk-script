@@ -12,7 +12,7 @@ def translate(image):
     translations = np.random.rand(2) * [width - shape, height - shape]
     translations = [int(value) for value in translations]
 
-    return tf.contrib.image.translate(image, translations, 'BILINEAE'), translations
+    return tf.contrib.image.translate(image, translations, 'BILINEAR'), translations
 
 
 

@@ -7,7 +7,7 @@ import pdb
 # tf.enable_eager_execution()
 
 dict_loc = 'saved_dict.csv'
-epochs = 30
+epochs = 5
 batch_size = 4
 
 model = create_model()
