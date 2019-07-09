@@ -29,6 +29,8 @@ def load_and_preprocess_image(path):
 def load_and_preprocess_from_path_label(path, x, y):
     image = load_and_preprocess_image(path)
     image, translations = translate(image)
+    image = tf.image.resize(image, [shape, shape])
+    # image = tf.to_float(image)
     return image, tf.stack([tf.to_float(x-translations[0])/width, tf.to_float(y-translations[1])/height])
     # return image, tf.stack([x, y])
 
