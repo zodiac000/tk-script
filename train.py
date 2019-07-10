@@ -4,11 +4,11 @@ from model import create_model
 from dataset import get_ds
 import pdb
 
-tf.compat.v1.enable_eager_execution()
+# tf.compat.v1.enable_eager_execution()
 
 dict_loc = 'saved_dict.csv'
-epochs = 30
-batch_size = 32
+epochs = 5
+batch_size = 4
 
 model = create_model()
 model.summary()
