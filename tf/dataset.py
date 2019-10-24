@@ -42,16 +42,16 @@ def get_ds(dict_loc, epochs, batch_size):
     print('train_image_count: {}'.format(train_image_count))
     
     train_image_label_ds = tf.data.Dataset.from_tensor_slices((all_image_paths[0], all_x[0], all_y[0]))
-    # train_image_label_ds = train_image_label_ds.map(load_and_preprocess_from_path_label_translate)
-    train_image_label_ds = train_image_label_ds.map(load_and_preprocess_from_path_label)
+    train_image_label_ds = train_image_label_ds.map(load_and_preprocess_from_path_label_translate)
+    # train_image_label_ds = train_image_label_ds.map(load_and_preprocess_from_path_label)
     test_image_label_ds = tf.data.Dataset.from_tensor_slices((all_image_paths[1], all_x[1], all_y[1]))
     test_image_label_ds = test_image_label_ds.map(load_and_preprocess_from_path_label)
 
     ds_train = train_image_label_ds.shuffle(buffer_size=train_image_count) \
-                                   .repeat(epochs) \
                                    .batch(batch_size) \
                                    .prefetch(buffer_size=AUTOTUNE)
 
+                                   # .repeat(epochs) \
     ds_test = test_image_label_ds.batch(batch_size) \
                             .prefetch(buffer_size=AUTOTUNE)
 

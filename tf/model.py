@@ -33,7 +33,9 @@ def create_model():
     model.add(layers.Dense(32, activation='relu'))
     model.add(layers.Dense(2, activation='sigmoid'))
 
-    model.compile(optimizer='adam',
+    optimizer = tf.keras.optimizers.Adam(1e-5)
+
+    model.compile(optimizer=optimizer,
               loss='mse',
               metrics=['accuracy'])
 

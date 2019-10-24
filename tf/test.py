@@ -14,7 +14,7 @@ ds_test = ds_test.take(1)
 
 model = create_model()
 model.summary()
-model.load_weights('check_points/mymodel_3.h5')
+model.load_weights('check_points/mymodel_48.h5')
 
 all_image_paths, all_x, all_y = get_data_list(saved_dict)
 all_image_paths = all_image_paths[1]
