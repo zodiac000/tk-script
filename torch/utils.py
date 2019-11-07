@@ -5,12 +5,14 @@ from skimage import io, transform
 import pandas as pd
 import os
 from PIL import Image
+from pdb import set_trace
+
 
 
 def generate_heatmap(width, height, x_gt, y_gt):
     x = np.zeros((width, height))
     # x[int(x_gt)][int(y_gt)] = 1
-    x[int(x_gt), int(y_gt)] = 255
+    x[int(y_gt), int(x_gt)] = 255
     return x
 
 
@@ -49,14 +51,38 @@ class CoorToHeatmap(object):
         h, w = image.shape
 
         coor = coor * [self.output_size / w, self.output_size / h]
-        # import pdb
-        # pdb.set_trace()
         y = generate_heatmap(self.output_size, self.output_size, \
                 coor[0, 0], coor[0, 1])
         # y = y.reshape(1, h, w)
         y = Image.fromarray(np.uint8(y))
-
         return {'image': image, 'coor': y}
+
+def heatmap_to_coor(nparray):
+    max = np.argmax(nparray)
+    # set_trace()
+    y = max // nparray.shape[1]
+    x = max % nparray.shape[1]
+
+    return x, y
+
+def accuracy(outputs, labels):
+    coor_outputs = []
+    coor_labels = []
+    for out in outputs:
+        x, y = heatmap_to_coor(out)
+        coor_outputs.append((x, y))
+    for label in labels:
+        x, y = heatmap_to_coor(label)
+        coor_labels.append((x, y))
+
+    acc_x = 0
+    acc_y = 0
+    for idx, output in enumerate(coor_outputs):
+        acc_x += (1 - abs(output[0] - coor_labels[idx][0]) / 224)
+        acc_y += (1 - abs(output[1] - coor_labels[idx][1]) / 224)
+        # set_trace()
+
+    return acc_x / len(outputs), acc_y / len(outputs)
 
 # https://pytorch.org/docs/stable/torchvision/transforms.html#torchvision.transforms.Pad
 class Padding(object):

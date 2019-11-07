@@ -61,8 +61,7 @@ class Student(nn.Module):
         conv3 = F.max_pool2d(self.enc3(conv2), 2)  #256*28*28
         conv4 = F.max_pool2d(self.enc4(conv3), 2)  #512*14*14
         conv5 = F.max_pool2d(self.enc5(conv4), 2)  #512*7*7
-        
-        
+        x = torch.flatten(conv5, start_dim=1)
         # x = conv5.reshape(-1)
         # x = F.relu(self.fc1(x))
         # x = F.relu(self.fc2(x))
@@ -81,3 +80,13 @@ class Student(nn.Module):
         # out = nn.Softmax2d()(out)
         out = nn.Softmax(2)(out.view(-1, 1, 224*224)).view(-1, 1,224,224)
         return out
+
+
+if __name__ == "__main__":
+    student = Student().cuda()
+    input = torch.randn(2,1,224,224).cuda()
+    print(input)
+    print(input.shape)
+    output = student(input)
+    set_trace()
+
