@@ -51,111 +51,131 @@ class CoorToHeatmap(object):
         h, w = image.shape
 
         coor = coor * [self.output_size / w, self.output_size / h]
-        y = generate_heatmap(self.output_size, self.output_size, \
-                coor[0, 0], coor[0, 1])
+        hmap = generate_heatmap(self.output_size, self.output_size, \
+                coor[0], coor[1])
         # y = y.reshape(1, h, w)
-        y = Image.fromarray(np.uint8(y))
-        return {'image': image, 'coor': y}
+        hmap = Image.fromarray(np.uint8(hmap))
+        # set_trace()
+        # return {'image': image, 'hmap': y}
+        return hmap 
 
 def heatmap_to_coor(nparray):
     max = np.argmax(nparray)
-    # set_trace()
     y = max // nparray.shape[1]
     x = max % nparray.shape[1]
+    # set_trace()
 
     return x, y
 
-def accuracy(outputs, labels):
+def accuracy_sum(outputs, labels):
     coor_outputs = []
     coor_labels = []
+    list_acc_x = []
+    list_acc_y = []
     for out in outputs:
         x, y = heatmap_to_coor(out)
-        coor_outputs.append((x, y))
-    for label in labels:
-        x, y = heatmap_to_coor(label)
-        coor_labels.append((x, y))
+        coor_outputs.append((x / 224 * 1280, y / 224 * 1024))
+    # for label in labels:
+        # x, y = heatmap_to_coor(label)
+        # coor_labels.append((x, y))
 
-    acc_x = 0
-    acc_y = 0
+    sum_acc_x = 0
+    sum_acc_y = 0
     for idx, output in enumerate(coor_outputs):
-        acc_x += (1 - abs(output[0] - coor_labels[idx][0]) / 224)
-        acc_y += (1 - abs(output[1] - coor_labels[idx][1]) / 224)
+        acc_x = (1 - abs(output[0] - labels[idx][0]) / 1280)
+        acc_y = (1 - abs(output[1] - labels[idx][1]) / 1024)
+        sum_acc_x += acc_x
+        sum_acc_y += acc_y
+        list_acc_x.append(acc_x)
+        list_acc_y.append(acc_y)
         # set_trace()
 
-    return acc_x / len(outputs), acc_y / len(outputs)
+    # return sum_acc_x / len(outputs), sum_acc_y / len(outputs)
+    return sum_acc_x, sum_acc_y, list_acc_x, list_acc_y
 
-# https://pytorch.org/docs/stable/torchvision/transforms.html#torchvision.transforms.Pad
-class Padding(object):
-    """Adding two more empty channels to the original image.
-    Args:
+def spike(hmap):
+    x, y = hmap.squeeze().max(1)[0].max(0)[1].item(), hmap.squeeze().max(0)[0].max(0)[1].item()
+    new_hmap = torch.zeros(hmap.shape)
+    new_hmap[0, x, y] = 1
+    return new_hmap
+
+def crop(image, w_center, h_center, coor, scale):
+    h_image, w_image = image.shape
+    image_np = image.numpy()
+    w_center = int(w_center / 224 * w_image)
+    h_center = int(h_center / 224 * h_image)
+    if w_center - (scale/2) < 0:
+        w_left = 0
+        w_right = scale
+        left_margin = 0
+    elif w_center + (scale/2) > w_image:
+        w_left = w_image - scale
+        w_right = w_image
+        left_margin = w_left
+    else:
+        w_left = w_center - int(scale/2)
+        w_right = w_center + int(scale/2)
+        left_margin = w_left
+
+    if h_center - (scale/2) < 0:
+        h_top = 0
+        h_bottom = scale
+        top_margin = 0
+    elif h_center + (scale/2) > h_image:
+        h_top = h_image -scale
+        h_bottom = h_image
+        top_margin = h_top
+    else:
+        h_top = h_center - int(scale/2)
+        h_bottom = h_center + int(scale/2)
+        top_margin = h_top
+    hmap = torch.zeros(224, 224)
+    if h_top <= coor[0] < h_bottom and \
+        w_left <= coor[1] < w_right:
+            hmap[int((coor[0] - top_margin)  / (scale/224)), int((coor[1] - left_margin) / (scale/224))] = 1
+    
+    return image[h_top:h_bottom, w_left:w_right], hmap
 
 
-    """
-    def __init__(self):
-        pass
+# def crop_112(image, w_center, h_center, coor):
+    # h_image, w_image = image.shape
+    # image_np = image.numpy()
+    # w_center = int(w_center / 224 * w_image)
+    # h_center = int(h_center / 224 * h_image)
+    # # coor = coor * [self.output_size / w, self.output_size / h]
+    # if w_center - 56 < 0:
+        # w_left = 0
+        # w_right = 112
+        # left_margin = 0
+    # elif w_center + 56 > w_image:
+        # w_left = w_image - 112
+        # w_right = w_image
+        # left_margin = w_left
+    # else:
+        # w_left = w_center - 56
+        # w_right = w_center + 56
+        # left_margin = w_left
 
-    def __call__(self, sample):
-        image, coor = sample['image'], sample['coor']
-        h, w = image.shape[:2]
-        image = image.reshape(1, h, w)
-        # zeros = np.zeros((2, h, w))
-        # image = np.concatenate((image, zeros), axis=0)
+    # if h_center - 56 < 0:
+        # h_top = 0
+        # h_bottom = 112
+        # top_margin = 0
+    # elif h_center + 56 > h_image:
+        # h_top = h_image -112
+        # h_bottom = h_image
+        # top_margin = h_top
+    # else:
+        # h_top = h_center - 56
+        # h_bottom = h_center + 56
+        # top_margin = h_top
+    # hmap = torch.zeros(224, 224)
+    # if coor[0] >= h_top and coor[0] < h_bottom and \
+        # coor[1] >= w_left and coor[1] < w_right:
+            # hmap[(coor[0] - top_margin) * 2, (coor[1] - left_margin) * 2] = 1
+    # image_112 = image[h_top:h_bottom, w_left:w_right]
 
-        return {'image': image, 'coor': coor}
+    # return image_112, hmap
 
-
-
-# https://pytorch.org/docs/stable/torchvision/transforms.html#torchvision.transforms.Resize
-# https://pytorch.org/docs/stable/_modules/torchvision/transforms/transforms.html#Resize
-class Rescale(object):
-    """Rescale the image in a sample to a given size.
-
-    Args:
-        output_size (tuple or int): Desired output size. If tuple, output is
-            matched to output_size. If int, smaller of image edges is matched
-            to output_size keeping aspect ratio the same.
-    """
-    def __init__(self, output_size):
-        assert isinstance(output_size, (int, tuple))
-        self.output_size = output_size
-
-
-    def __call__(self, sample):
-        image, coor = sample['image'], sample['coor']
-
-        h, w = image.shape[:2]
-        # if isinstance(self.output_size, int):
-            # if h > w:
-                # new_h, new_w = self.output_size * h / w, self.output_size
-            # else:
-                # new_h, new_w = self.output_size, self.output_size * w / h
-        # else:
-            # new_h, new_w = self.output_size
-
-        # new_h, new_w = int(new_h), int(new_w)
-
-        if isinstance(self.output_size, int):
-            img = transform.resize(image, (self.output_size, self.output_size))
-
-        # h and w are swapped for coor because for images,
-        # x and y axes are axis 1 and 0 respectively
-        coor = coor * [self.output_size / w, self.output_size / h]
-
-        return {'image': img, 'coor': coor}
-
-# https://pytorch.org/docs/stable/torchvision/transforms.html#torchvision.transforms.ToTensor
-class ToTensor(object):
-    """Convert ndarrays in sample to Tensors."""
-
-    def __call__(self, sample):
-        image, coor = sample['image'], sample['coor']
-
-        # swap color axis because
-        # numpy image: H x W x C
-        # torch image: C X H X W
-        # image = image.transpose((2, 0, 1))
-        return {'image': torch.from_numpy(image).float(),
-                'coor': torch.from_numpy(coor).float()}
 
 if __name__ == "__main__":
     n = 33

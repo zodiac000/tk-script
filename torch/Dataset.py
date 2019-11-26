@@ -51,36 +51,31 @@ class WeldingDatasetToTensor(Dataset):
 
         self.all_data = pd.read_csv(csv_file, header=None)
         self.root_dir = root_dir
-        self.input_transform = Compose([Resize((224, 224)), ToTensor()])
-        # self.target_transform = Compose([CoorToHeatmap(224), ToTensor()])
-        self.to_heatmap_transform = CoorToHeatmap(224)
-        self.target_to_tensor_transform = ToTensor()
 
     def __len__(self):
         return len(self.all_data)
 
-    def helper(self, idx):
+
+    def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
         image_name = self.all_data.iloc[idx, 0]        
         img_name = os.path.join(self.root_dir + 'images/',
                                 self.all_data.iloc[idx, 0])
         image_pil = Image.open(img_name)
-        image = np.array(image_pil)
+        origin_image = np.array(image_pil)
         coor = self.all_data.iloc[idx, 1:]
-        coor = np.array([coor])
-        sample = {'image': image, 'coor': coor}
-        sample = self.to_heatmap_transform(sample)
-        coor = sample['coor']
-        coor = self.target_to_tensor_transform(coor)
-        image = self.input_transform(image_pil)
-
-        sample = {'image': image, 'coor': coor, 'img_name': image_name}
-
+        coor = np.array(coor)
+        sample = {'image': origin_image, 'coor': coor}
+        hmap = CoorToHeatmap(224)(sample)
+        hmap = ToTensor()(hmap)
+        input_transform = Compose([Resize((224, 224)), ToTensor()])
+        image = input_transform(image_pil)
+    
+        sample = {'image': image, 'hmap': hmap, \
+                'img_name': image_name, 'coor': coor.astype(int), 'origin_img': origin_image}
+        
         return sample
-
-    def __getitem__(self, idx):
-        return self.helper(idx)
 
 # class WeldingDataset(Dataset):
     # """Welding dataset."""

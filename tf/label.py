@@ -4,6 +4,7 @@ import os
 import re
 from collections import OrderedDict
 import pyscreenshot as ImageGrab
+import pdb
 
 
 class ImageLabel:
@@ -109,7 +110,8 @@ class ImageLabel:
 
 
     def load_image(self):
-        img = ImageTk.PhotoImage(Image.open(self.directs[self.pointer]))
+        dir = './images/'
+        img = ImageTk.PhotoImage(Image.open(os.path.join(dir, self.directs[self.pointer])))
         self.current_image = img
 
     def save_image(self, event):

@@ -16,9 +16,15 @@ class ImageLabel:
         self.root = Tk()
         self.prevOval = None
         self.current_image = None
+        self.top_10_pointer = 0
+        self.top_10 = [262, 828, 842, 842, 545, 328, 747, 846, 324, 326]
         self.saved_dict = "csv/saved_dict.csv"
         self.coordinates = "csv/coordinates.txt"
-        self.pred_dict = "csv/pred_dict_4265.csv"
+        # self.pred_dict = "csv/pred_dict_4265.csv"
+        # self.pred_dict = "csv/pred_dict_200.csv"
+        # self.pred_dict = "csv/pred_dict_200_G.csv"
+        # self.pred_dict = "csv/pred_dict_cascade_4265.csv"
+        self.pred_dict = "csv/pred_dict_cascade3_4265.csv"
 
     def callback_save_point(self, event):
         msg = "clicked at " + str(event.x) + " " + str(event.y) + "\n"
@@ -120,6 +126,18 @@ class ImageLabel:
         print("image saved to {}".format(file_name))
 
 
+    def callback_get(self, event):
+        if self.pointer < len(self.directs) - 1:
+            canvas.delete("all")
+            self.pointer = self.top_10[self.top_10_pointer % 10]
+            self.top_10_pointer += 1
+            self.load_image()
+            canvas.create_image(0, 0, image=self.current_image, anchor=NW)
+            self.auto_paint()
+            self.prevOval = None
+
+
+
 if __name__ == "__main__":
     il = ImageLabel()
     # il.load_dictionary_from_osdir("images", self.coordinates) # 1. load from original coodinates
@@ -136,4 +154,6 @@ if __name__ == "__main__":
     il.root.bind("<Right>", il.callback_next)
     il.root.bind("<space>", il.update_coordinates)
     il.root.bind("<Return>", il.save_image)
+    il.root.bind("<Button-2>", il.callback_get)
+
     il.root.mainloop()

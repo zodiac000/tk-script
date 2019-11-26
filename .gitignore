@@ -5,6 +5,7 @@ torch/__pycache__/*
 torch/pred_images/*
 torch/*.h5
 torch/runs/*
+torch/*.pth
 
 
 tf/images/*
@@ -14,3 +15,4 @@ tf/__pycache__/*
 tf/pred_images/*
 tf/*.h5
 tf/runs/*
+tf/*.pth

@@ -1,4 +1,5 @@
 from Student import Student
+from Student2 import Student2
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
@@ -8,15 +9,19 @@ import numpy as np
 from torch.utils.data.sampler import SubsetRandomSampler
 from torch.utils.data import DataLoader
 import math
-from utils import accuracy_sum, heatmap_to_coor
+from utils import accuracy_sum, heatmap_to_coor, crop_224, crop_112, crop_448
+from torchvision.transforms import ToTensor, Resize
+from PIL import Image
 
+# training_number = 50
 training_number = 4265
 
 train_dataset = WeldingDatasetToTensor(csv_file='./csv/head_' + str(training_number) + '.csv', \
                                         root_dir='./')
 val_dataset = WeldingDatasetToTensor(csv_file='./csv/tail_1000.csv', root_dir='./')
-saved_weight_dir = './check_points/saved_weights_' + str(training_number) + '.pth'
-tensorboard_file = 'runs/bootstrap_' + str(training_number)
+# val_dataset = WeldingDatasetToTensor(csv_file='./csv/tail_100.csv', root_dir='./')
+saved_weight_dir = './check_points/saved_weights_cascade3_' + str(training_number) + '.pth'
+tensorboard_file = 'runs/bootstrap_cascade3_' + str(training_number)
 
 # saved_weights = './check_points/saved_weights_200.pth'
 for i in range(len(train_dataset)):
@@ -25,8 +30,8 @@ for i in range(len(train_dataset)):
     if i == 3:
         break
 
-num_epochs = 10000
-batch_size = 32
+num_epochs = 30000
+batch_size = 30
 lr = 1e-3
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, \
@@ -38,6 +43,7 @@ writer = SummaryWriter(tensorboard_file)
 
 
 model = Student().cuda()
+# model = Student2().cuda()
 criterion = nn.MSELoss().cuda()
 # criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
@@ -47,6 +53,7 @@ def train():
                         num_workers=4, shuffle=True)
     # model.load_state_dict(torch.load(saved_weights))
     max_total_acc_x = 0
+    max_euclidean_distance = 99999
     for epoch in range(num_epochs):
         dataloader_iterator = iter(train_loader)
         try:
@@ -58,7 +65,7 @@ def train():
             sample_batched = next(dataloader_iterator)
 
         # model.train()
-        train_loss = 0
+        # train_loss = 0
         # print('Start epoch {}'.format(epoch))
         # for i_batch, sample_batched in enumerate(train_loader):
             # https://pytorch.org/docs/stable/notes/cuda.html
@@ -66,17 +73,88 @@ def train():
         labels = sample_batched['hmap'].cuda()
         coors = sample_batched['coor'].cpu().detach().numpy()
 
+
+        img_names = sample_batched['img_name']
+        origin_imgs = sample_batched['origin_img']
+
         optimizer.zero_grad()
         outputs = model(inputs)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
         
-        train_loss += loss.item()
+############################  Second block  ############
+        empty_batch = True
+        for index, out in enumerate(outputs.cpu().detach().numpy()):
+            w_center, h_center = heatmap_to_coor(out.squeeze())
+            cropped_image, cropped_hmap = crop_448(origin_imgs[index], w_center, h_center, coors[index])
+            
+            cropped_image = ToTensor()(Resize((224,224))(Image.fromarray(cropped_image.numpy()))).unsqueeze(0)
+            cropped_hmap = cropped_hmap.unsqueeze(dim=0).unsqueeze(0)
 
 
+            if empty_batch:
+                cropped_image_batch = cropped_image
+                cropped_hmap_batch = cropped_hmap
+                empty_batch = False
+            else:
+                cropped_image_batch = torch.cat([cropped_image_batch, cropped_image])
+                cropped_hmap_batch = torch.cat([cropped_hmap_batch, cropped_hmap])
 
-        if epoch % 1 == 0:    # every 20 mini-batches...
+        optimizer.zero_grad()
+        outputs = model(cropped_image_batch.cuda())
+        loss = criterion(outputs, cropped_hmap_batch.cuda())
+        loss.backward()
+        optimizer.step()
+############################  Third block  ############
+        empty_batch = True
+        for index, out in enumerate(outputs.cpu().detach().numpy()):
+            w_center, h_center = heatmap_to_coor(out.squeeze())
+            cropped_image, cropped_hmap = crop_224(origin_imgs[index], w_center, h_center, coors[index])
+            
+            cropped_image = ToTensor()(cropped_image.numpy()).unsqueeze(0)
+            cropped_hmap = cropped_hmap.unsqueeze(dim=0).unsqueeze(0)
+
+
+            if empty_batch:
+                cropped_image_batch = cropped_image
+                cropped_hmap_batch = cropped_hmap
+                empty_batch = False
+            else:
+                cropped_image_batch = torch.cat([cropped_image_batch, cropped_image])
+                cropped_hmap_batch = torch.cat([cropped_hmap_batch, cropped_hmap])
+
+        optimizer.zero_grad()
+        outputs = model(cropped_image_batch.cuda())
+        loss = criterion(outputs, cropped_hmap_batch.cuda())
+        loss.backward()
+        optimizer.step()
+
+############################  Forth block  ############
+        empty_batch = True
+        for index, out in enumerate(outputs.cpu().detach().numpy()):
+            w_center, h_center = heatmap_to_coor(out.squeeze())
+            cropped_image, cropped_hmap = crop_112(origin_imgs[index], w_center, h_center, coors[index])
+            
+            cropped_image = ToTensor()(Resize((224,224))(Image.fromarray(cropped_image.numpy()))).unsqueeze(0)
+            cropped_hmap = cropped_hmap.unsqueeze(dim=0).unsqueeze(0)
+
+            if empty_batch:
+                cropped_image_batch = cropped_image
+                cropped_hmap_batch = cropped_hmap
+                empty_batch = False
+            else:
+                cropped_image_batch = torch.cat([cropped_image_batch, cropped_image])
+                cropped_hmap_batch = torch.cat([cropped_hmap_batch, cropped_hmap])
+
+        optimizer.zero_grad()
+        outputs = model(cropped_image_batch.cuda())
+        loss = criterion(outputs, cropped_hmap_batch.cuda())
+        loss.backward()
+        optimizer.step()
+
+
+        if (epoch+1) % 5 == 0:    # every 20 mini-batches...
             e_distance = 0
             for index, out in enumerate(outputs):
                 x, y = heatmap_to_coor(out.reshape(224, 224).cpu().detach().numpy())
@@ -84,21 +162,21 @@ def train():
                                 (int(y/224*1024)-coors[index][1])**2)**0.5
 
             print('Train epoch: {}\tLoss: {:.30f}'.format(
-                    epoch,
+                    epoch+1,
                     # i_batch * len(inputs),
                     # len(train_loader.dataset), 100. * i_batch / len(train_loader),
                     loss.item())) #/ len(inputs)))
-            writer.add_scalar("bootstrap_training_loss", \
+            writer.add_scalar("cascade3_training_loss", \
                     loss.item(), #/ len(inputs), \
                     epoch  + epoch * math.ceil(len(train_loader) / batch_size) \
                     )
-            writer.add_scalar("bootstrap_training_Euclidean_Distance", \
-                    e_distance/len(outputs), 
+            writer.add_scalar("cascade3_training_Euclidean_Distance", \
+                    e_distance, 
                     epoch  + epoch * math.ceil(len(train_loader) / batch_size) \
                     )
 
 
-        if epoch % 20 == 0:    # every 20 mini-batches...
+        if (epoch+1) % 50 == 0:    # every 20 mini-batches...
             # model.eval()
             with torch.no_grad():
                 valid_loss = 0
@@ -126,8 +204,8 @@ def train():
                 valid_loss = valid_loss / len(valid_loader)
                 print('Valid loss {}'.format(valid_loss))
 
-                writer.add_scalar("bootstrap_Valid_loss", valid_loss, epoch)
-                writer.add_scalar("bootstrap_Valid_Euclidean_Distance", valid_loss, epoch)
+                writer.add_scalar("cascade3_Valid_loss", valid_loss, epoch)
+                writer.add_scalar("cascade3_Valid_Euclidean_Distance", e_distance/len(valid_loader.dataset), epoch)
 
                 print("=" * 30)
                 print("total acc_x = {:.10f}".format(total_acc_x/len(valid_loader.dataset)))
@@ -135,8 +213,10 @@ def train():
                 print("Euclidean Distance: {}".format(e_distance/len(valid_loader.dataset)))
                 print("=" * 30)
             
-                if total_acc_x > max_total_acc_x:
-                    max_total_acc_x = total_acc_x
+                # if total_acc_x > max_total_acc_x:
+                    # max_total_acc_x = total_acc_x
+                if e_distance/len(valid_loader.dataset) < max_euclidean_distance:
+                    max_euclidean_distance = e_distance/len(valid_loader.dataset)
                     torch.save(model.state_dict(), saved_weight_dir)
                     print('model saved to ' + saved_weight_dir)
 
