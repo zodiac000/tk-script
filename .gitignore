@@ -6,6 +6,10 @@ torch/pred_images/*
 torch/*.h5
 torch/runs/*
 torch/*.pth
+torch/pass_images/*
+torch/failed_images/*
+torch/pred_fail/*
+torch/pred_pass/
 
 
 tf/images/*
@@ -16,3 +20,6 @@ tf/pred_images/*
 tf/*.h5
 tf/runs/*
 tf/*.pth
+tf/images
+
+

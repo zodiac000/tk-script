@@ -1,5 +1,5 @@
-from Student import Student
-from Student2 import Student2
+from Student_reg import Student
+# from Student2 import Student2
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
@@ -12,10 +12,10 @@ from torchvision.transforms import ToTensor, Compose, Resize
 from PIL import Image
 import matplotlib.pyplot as plt
 from utils import heatmap_to_coor, accuracy_sum
-import matplotlib.pyplot as plt
 ########################################    Transformed Dataset
 
-file_to_read = './csv/tail_1000.csv'
+file_to_read = './csv/pass_adbc_1000.csv'
+# file_to_read = './csv/failed.csv'
 
 # saved_weights = './check_points/saved_weights_50.pth'
 # file_to_write = "./csv/pred_dict_50.csv"
@@ -35,14 +35,22 @@ file_to_read = './csv/tail_1000.csv'
 # saved_weights = './check_points/saved_weights_cascade2_4265.pth'
 # file_to_write = "./csv/pred_dict_cascade2_4265.csv"
 
-saved_weights = './check_points/saved_weights_cascade4_4265.pth'
-file_to_write = "./csv/pred_dict_cascade4_4265.csv"
+# saved_weights = './check_points/saved_weights_cascade4_4265.pth'
+# file_to_write = "./csv/pred_dict_cascade4_4265.csv"
+
+
+# saved_weights = './check_points/saved_weights_cascade4_6415.pth'
+# file_to_write = "./csv/pred_dict_cascade4_6415.csv"
+
+saved_weights = './check_points/saved_weights_ad_6500.pth'
+# file_to_write = "./csv/pred_dict_cascade4_6500.csv"
+file_to_write = "./csv/pred_ad_6500.csv"
 batch_size = 4
 
-transformed_dataset = WeldingDatasetToTensor(csv_file=file_to_read, root_dir='./')
+dataset = WeldingDatasetToTensor(csv_file=file_to_read, root_dir='./')
 
 
-valid_loader = DataLoader(transformed_dataset, batch_size=batch_size, \
+valid_loader = DataLoader(dataset, batch_size=batch_size, \
                         num_workers=1)
 
 model = Student().cuda()
@@ -70,7 +78,7 @@ with torch.no_grad():
     for i, batch in enumerate(valid_loader):
         inputs = batch['image'].float().cuda()
         labels = batch['hmap'].float().cuda()
-        coors = batch['coor'].numpy()
+        coors = batch['coor_bc'].numpy()
         img_names = batch['img_name']
         outputs = model(inputs)
         valid_loss += criterion(outputs, labels)

@@ -18,7 +18,7 @@ from pdb import set_trace
 def show_coor_batch(sample_batched):
     """Show image with landmarks for a batch of samples."""
     images_batch, coor_batch = \
-            sample_batched['image'], sample_batched['coor']
+            sample_batched['image'], sample_batched['coor_bc']
     # batch_size = len(images_batch)
     # im_size = images_batch.size(2)
     # grid_border_size = 2
@@ -60,20 +60,30 @@ class WeldingDatasetToTensor(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
         image_name = self.all_data.iloc[idx, 0]        
-        img_name = os.path.join(self.root_dir + 'images/',
+        # img_name = os.path.join(self.root_dir + 'fail_images/',
+        img_name = os.path.join(self.root_dir + 'pass_images/',
                                 self.all_data.iloc[idx, 0])
         image_pil = Image.open(img_name)
         origin_image = np.array(image_pil)
-        coor = self.all_data.iloc[idx, 1:]
-        coor = np.array(coor)
-        sample = {'image': origin_image, 'coor': coor}
+        coor_bcad = self.all_data.iloc[idx, 1:]
+        coor_bc = np.array(coor_bcad[:2]).astype(int)
+        # coor_ad = np.array(coor_bcad[2:]).astype(int)
+        # dx = coor_bc[0] - coor_ad[0]
+        # dy = coor_bc[1] - coor_ad[1]
+        # dx_dy = torch.from_numpy(np.asarray([dx, dy]))
+        class_real = torch.zeros(1, requires_grad=False) if int(coor_bc[0]) == -1 \
+                        else torch.ones(1, requires_grad=False)
+        # class_real = ToTensor()(class_real)
+        sample = {'image': origin_image, 'coor_bc': coor_bc}
         hmap = CoorToHeatmap(224)(sample)
         hmap = ToTensor()(hmap)
         input_transform = Compose([Resize((224, 224)), ToTensor()])
         image = input_transform(image_pil)
     
         sample = {'image': image, 'hmap': hmap, \
-                'img_name': image_name, 'coor': coor.astype(int), 'origin_img': origin_image}
+                'img_name': image_name, 'coor_bc': coor_bc.astype(int), 'origin_img': origin_image,\
+                'class_real': class_real}
+                # 'class_real': class_real, 'dx_dy':dx_dy}
         
         return sample
 

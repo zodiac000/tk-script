@@ -12,9 +12,22 @@ from pdb import set_trace
 def generate_heatmap(width, height, x_gt, y_gt):
     x = np.zeros((width, height))
     # x[int(x_gt)][int(y_gt)] = 1
-    x[int(y_gt), int(x_gt)] = 255
+    # set_trace()
+    if x_gt > width or y_gt > height:
+        print('invalid coordinates labels ---- {}, {}'.format(x_gt, y_gt))
+    if x_gt > -1 and y_gt > -1:
+        x[int(y_gt), int(x_gt)] = 255
     return x
 
+def generate_heatmap2(w, h, x_gt, y_gt):
+    x_range = np.arange(start=0, stop=w, dtype=int)
+    y_range = np.arange(start=0, stop=h, dtype=int)
+    xx, yy = np.meshgrid(x_range, y_range)
+    d2 = (xx - int(x_gt))**2 + (yy - int(y_gt))**2
+    sigma = 2
+    exponent = d2 / 2.0 / sigma / sigma
+    heatmap = np.exp(-exponent)
+    return heatmap
 
 def show_coordinate(image, coor):
     """Show image with landmarks"""
@@ -47,12 +60,14 @@ class CoorToHeatmap(object):
         self.output_size = output_size
 
     def __call__(self, sample):
-        image, coor = sample['image'], sample['coor']
+        image, coor_bc = sample['image'], sample['coor_bc']
         h, w = image.shape
 
-        coor = coor * [self.output_size / w, self.output_size / h]
+        n_coor = coor_bc * [self.output_size / w, self.output_size / h]
+        
         hmap = generate_heatmap(self.output_size, self.output_size, \
-                coor[0], coor[1])
+                n_coor[0], n_coor[1])
+        # set_trace()
         # y = y.reshape(1, h, w)
         hmap = Image.fromarray(np.uint8(hmap))
         # set_trace()
