@@ -64,86 +64,28 @@ class WeldingDatasetToTensor(Dataset):
         img_name = os.path.join(self.root_dir + 'pass_images/',
                                 self.all_data.iloc[idx, 0])
         image_pil = Image.open(img_name)
-        origin_image = np.array(image_pil)
+        image_np = np.array(image_pil)
         coor_bcad = self.all_data.iloc[idx, 1:]
         coor_bc = np.array(coor_bcad[:2]).astype(int)
-        # coor_ad = np.array(coor_bcad[2:]).astype(int)
-        # dx = coor_bc[0] - coor_ad[0]
-        # dy = coor_bc[1] - coor_ad[1]
-        # dx_dy = torch.from_numpy(np.asarray([dx, dy]))
-        class_real = torch.zeros(1, requires_grad=False) if int(coor_bc[0]) == -1 \
-                        else torch.ones(1, requires_grad=False)
-        # class_real = ToTensor()(class_real)
-        sample = {'image': origin_image, 'coor_bc': coor_bc}
-        hmap = CoorToHeatmap(224)(sample)
+        # class_real = torch.zeros(1, requires_grad=False) if int(coor_bc[0]) == -1 \
+                        # else torch.ones(1, requires_grad=False)
+        # sample = {'image': image_np, 'coor_bc': coor_bc}
+        hmap = CoorToHeatmap(image_np.shape, 224)(coor_bc)
         hmap = ToTensor()(hmap)
         input_transform = Compose([Resize((224, 224)), ToTensor()])
         image = input_transform(image_pil)
     
-        sample = {'image': image, 'hmap': hmap, \
-                'img_name': image_name, 'coor_bc': coor_bc.astype(int), 'origin_img': origin_image,\
-                'class_real': class_real}
+        sample = {'image': image, \
+                'hmap': hmap, \
+                'img_name': image_name, \
+                'coor_bc': coor_bc, \
+                'origin_img': image_np,\
+                # 'class_real': class_real, \
+                }
                 # 'class_real': class_real, 'dx_dy':dx_dy}
         
         return sample
 
-# class WeldingDataset(Dataset):
-    # """Welding dataset."""
-
-    # def __init__(self, csv_file, root_dir):
-        # """
-        # Args:
-            # csv_file (string): Path to the csv file with annotations.
-            # root_dir (string): Directory with all the images.
-            # transform (callable, optional): Optional transform to be applied
-                # on a sample.
-        # """
-
-        # self.all_data = pd.read_csv(csv_file, header=None)
-        # self.root_dir = root_dir
-        # self.CoorToHeatmap = CoorToHeatmap(224)
-        # self.Resize = Resize((224, 224))
-        # self.input_transform = Compose([Resize((224, 224)), ToTensor()])
-
-    # def __len__(self):
-        # return len(self.all_data)
-
-
-    # def __getitem__(self, idx):
-        # if torch.is_tensor(idx):
-            # idx = idx.tolist()
-        # image_name = self.all_data.iloc[idx, 0]        
-        # img_name = os.path.join(self.root_dir + 'images/',
-                                # self.all_data.iloc[idx, 0])
-        # image_pil = Image.open(img_name)
-        # image = np.array(image_pil)
-        # coor = self.all_data.iloc[idx, 1:]
-        # coor = np.array([coor])
-        # sample = {'image': image, 'coor': coor}
-        # sample = self.CoorToHeatmap(sample)
-        # coor = sample['coor']
-        # coor = self.Resize(coor)
-        # coor = np.array(coor)
-        # image = self.input_transform(image_pil)
-        # sample = {'image': image, 'coor': coor, 'img_name': image_name}
-        # return sample
-
-
-
-# class MixedDataset(WeldingDataset):
-    # def __init__(self, csv_file, root_dir, student):
-        # super().__init__(csv_file, root_dir)
-        # self.student = student
-    # def __getitem__(self, idx):
-        # sample = self.helper(idx)
-        
-        # if np.random.uniform() < 0.5: # dice 5 - 5 
-            # # Real label
-            # return {'image': cat([sample['image'], sample['coor']], dim=1), 'label': torch.ones(1)}  # N, 2, H, W
-        # else:
-            # # Pseudo label
-            # return {'image': cat([sample['image'].cuda(), self.student(sample['image'].unsqueeze(0).cuda()).squeeze(0)], dim=1), 
-                    # 'label': torch.zeros(1)} # return image with student-generated label
 
 
 

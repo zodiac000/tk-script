@@ -15,16 +15,16 @@ from PIL import Image
 
 # training_number = 50
 # training_number = 4265
-training_number = 6500
+training_number = 100
 # training_number = 6415
 
-train_dataset = WeldingDatasetToTensor(csv_file='./csv/pass_adbc_' + str(training_number) + '.csv', \
+train_dataset = WeldingDatasetToTensor(csv_file='./csv/pass_' + str(training_number) + '.csv', \
                                         root_dir='./')
 # val_dataset = WeldingDatasetToTensor(csv_file='./csv/pass_valid_1000.csv', root_dir='./')
 val_dataset = WeldingDatasetToTensor(csv_file='./csv/pass_adbc_1000.csv', root_dir='./')
 # val_dataset = WeldingDatasetToTensor(csv_file='./csv/tail_100.csv', root_dir='./')
-saved_weight_dir = './check_points/saved_weights_ad_' + str(training_number) + '.pth'
-tensorboard_file = 'runs/cas_ad_' + str(training_number)
+saved_weight_dir = './check_points/saved_weights_bc_' + str(training_number) + '.pth'
+tensorboard_file = 'runs/bc_' + str(training_number)
 
 # saved_weights = './check_points/saved_weights_200.pth'
 for i in range(len(train_dataset)):
@@ -34,7 +34,7 @@ for i in range(len(train_dataset)):
         break
 
 num_epochs = 30000
-batch_size = 30
+batch_size = 20
 lr = 1e-3
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, \

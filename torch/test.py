@@ -12,39 +12,16 @@ from torchvision.transforms import ToTensor, Compose, Resize
 from PIL import Image
 import matplotlib.pyplot as plt
 from utils import heatmap_to_coor, accuracy_sum
+from tqdm import tqdm
 ########################################    Transformed Dataset
 
 file_to_read = './csv/pass_adbc_1000.csv'
 # file_to_read = './csv/failed.csv'
 
-# saved_weights = './check_points/saved_weights_50.pth'
-# file_to_write = "./csv/pred_dict_50.csv"
 
-# saved_weights = './check_points/saved_weights_200.pth'
-# file_to_write = "./csv/pred_dict_200.csv"
-
-# saved_weights = './check_points/weights_adverserial_gan_G.pth'
-# file_to_write = "./csv/pred_dict_200_G.csv"
-
-# saved_weights = './saved_weights_4265.pth'
-# file_to_write = "./csv/pred_dict_4265.csv"
-
-# saved_weights = './check_points/saved_weights_cascade_4265.pth'
-# file_to_write = "./csv/pred_dict_cascade_4265.csv"
-
-# saved_weights = './check_points/saved_weights_cascade2_4265.pth'
-# file_to_write = "./csv/pred_dict_cascade2_4265.csv"
-
-# saved_weights = './check_points/saved_weights_cascade4_4265.pth'
-# file_to_write = "./csv/pred_dict_cascade4_4265.csv"
-
-
-# saved_weights = './check_points/saved_weights_cascade4_6415.pth'
-# file_to_write = "./csv/pred_dict_cascade4_6415.csv"
-
-saved_weights = './check_points/saved_weights_ad_6500.pth'
+saved_weights = './check_points/saved_weights_bc_100.pth'
 # file_to_write = "./csv/pred_dict_cascade4_6500.csv"
-file_to_write = "./csv/pred_ad_6500.csv"
+file_to_write = "./csv/pred_bc_100.csv"
 batch_size = 4
 
 dataset = WeldingDatasetToTensor(csv_file=file_to_read, root_dir='./')
@@ -70,6 +47,7 @@ valid_loss = 0
 f = open(file_to_write, "w")
 all_acc_x = []
 all_acc_y = []
+pbar = tqdm(total=len(valid_loader.dataset))
 with torch.no_grad():
     total_acc_x = 0
     total_acc_y = 0
@@ -91,6 +69,7 @@ with torch.no_grad():
                             (int(y/224*1024)-coors[index][1])**2)**0.5
             distances.append(e_distance)
             e_distances += e_distance
+            pbar.update()
 
         # outputs = outputs.cpu().detach().numpy()
         labels = labels.cpu().detach().numpy()

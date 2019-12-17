@@ -55,18 +55,18 @@ class CoorToHeatmap(object):
             matched to output_size. If int, smaller of image edges is matched
             to output_size keeping aspect ratio the same.
     """
-    def __init__(self, output_size):
+    def __init__(self, input_size=(1024, 1280), output_size=224):
         assert isinstance(output_size, (int, tuple))
+        self.input_size = input_size
         self.output_size = output_size
 
-    def __call__(self, sample):
-        image, coor_bc = sample['image'], sample['coor_bc']
-        h, w = image.shape
+    def __call__(self, coor):
+        h, w = self.input_size
 
-        n_coor = coor_bc * [self.output_size / w, self.output_size / h]
+        coor = coor * [self.output_size / w, self.output_size / h]
         
         hmap = generate_heatmap(self.output_size, self.output_size, \
-                n_coor[0], n_coor[1])
+                coor[0], coor[1])
         # set_trace()
         # y = y.reshape(1, h, w)
         hmap = Image.fromarray(np.uint8(hmap))
