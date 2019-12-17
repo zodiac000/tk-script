@@ -1,7 +1,9 @@
 # ===============pytorch forlder ====================
 torch/__pycache__/*
+
 torch/check_points/*
-torch/**/runs/*
+torch/runs/*
+torch/csv/*
 
 torch/images/*
 torch/pred_images/*
@@ -10,7 +12,6 @@ torch/failed_images/*
 torch/pred_fail/*
 torch/pred_pass/*
 
-torch/csv/*
 torch/**/*.h5
 torch/*.pth
 
