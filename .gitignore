@@ -1,17 +1,22 @@
-torch/images/*
-torch/check_points/*
-torch/logs/*
+# ===============pytorch forlder ====================
 torch/__pycache__/*
+torch/check_points/*
+torch/**/runs/*
+
+torch/images/*
 torch/pred_images/*
-torch/*.h5
-torch/runs/*
-torch/*.pth
 torch/pass_images/*
 torch/failed_images/*
 torch/pred_fail/*
-torch/pred_pass/
+torch/pred_pass/*
+
+torch/csv/*
+torch/**/*.h5
+torch/*.pth
 
 
+
+# ===============tensorflow forlder ====================
 tf/images/*
 tf/check_points/*
 tf/logs/*
