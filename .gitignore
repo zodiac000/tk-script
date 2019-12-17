@@ -4,6 +4,7 @@ torch/__pycache__/*
 torch/check_points/*
 torch/runs/*
 torch/csv/*
+torch/shared/*
 
 torch/images/*
 torch/pred_images/*
