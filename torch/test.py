@@ -16,13 +16,13 @@ from tqdm import tqdm
 ########################################    Transformed Dataset
 
 # file_to_read = './csv/pass_adbc_1000.csv'
-file_to_read = './csv/pass_50_550.csv'
+file_to_read = './csv/pass_adbc_100_1100_valid.csv'
 # file_to_read = './csv/failed.csv'
 
 
 saved_weights = './check_points/saved_weights_bc_100.pth'
 # file_to_write = "./csv/pred_dict_cascade4_6500.csv"
-file_to_write = "./csv/pred_50_550.csv"
+file_to_write = "./csv/pred_100_1100.csv"
 batch_size = 4
 
 dataset = WeldingDatasetToTensor(csv_file=file_to_read, root_dir='./')
