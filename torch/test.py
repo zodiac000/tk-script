@@ -15,8 +15,8 @@ from utils import heatmap_to_coor, accuracy_sum
 from tqdm import tqdm
 ########################################    Transformed Dataset
 
-# file_to_read = './csv/pass_adbc_1000.csv'
-file_to_read = './csv/pass_adbc_100_1100_valid.csv'
+file_to_read = './csv/pass_adbc_1000.csv'
+# file_to_read = './csv/pass_adbc_100_1100_valid.csv'
 # file_to_read = './csv/failed.csv'
 
 
