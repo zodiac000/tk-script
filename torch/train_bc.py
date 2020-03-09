@@ -1,4 +1,4 @@
-from Student_reg import Student
+from Student_bc import Student
 # from Student2 import Student2
 import torch
 import torch.nn as nn
@@ -13,47 +13,71 @@ from utils import accuracy_sum, heatmap_to_coor, crop
 from torchvision.transforms import ToTensor, Resize
 from PIL import Image
 
-# training_number = 50
-# training_number = 4265
-training_number = 100
-# training_number = 6415
+from torch.utils.data.dataset import Subset
 
-train_dataset = WeldingDatasetToTensor(csv_file='./csv/pass_' + str(training_number) + '.csv', \
+training_size = 800
+labeled_dataset = WeldingDatasetToTensor(csv_file='./csv/pass_valid_tail_1000.csv', \
                                         root_dir='./')
-# val_dataset = WeldingDatasetToTensor(csv_file='./csv/pass_valid_1000.csv', root_dir='./')
-val_dataset = WeldingDatasetToTensor(csv_file='./csv/pass_adbc_1000.csv', root_dir='./')
-# val_dataset = WeldingDatasetToTensor(csv_file='./csv/tail_100.csv', root_dir='./')
-saved_weight_dir = './check_points/saved_weights_bc_' + str(training_number) + '.pth'
-tensorboard_file = 'runs/bc_' + str(training_number)
+# train_dataset = WeldingDatasetToTensor(csv_file='./csv/pass_valid_tail_800.csv', \
+                                        # root_dir='./')
+# val_dataset = WeldingDatasetToTensor(csv_file='./csv/pass_valid_200.csv', root_dir='./')
+# val_dataset = WeldingDatasetToTensor(csv_file='./csv/pass_valid_1000+79_shuffle_valid.csv', root_dir='./')
+saved_weight_dir = './check_points/weights_1000.pth'
+tensorboard_file = 'runs/bc_' + str(training_size)
 
-# saved_weights = './check_points/saved_weights_200.pth'
-for i in range(len(train_dataset)):
-    sample = train_dataset[i]
-    print(i, sample['image'].size(), sample['hmap'].size())
-    if i == 3:
-        break
+def split_dataset(data_set, split_at, order=None):
+    n_examples = len(data_set)
+
+    if split_at < 0:
+        raise ValueError('split_at must be non-negative')
+    if split_at > n_examples:
+        raise ValueError('split_at exceeds the dataset size')
+
+    if order is not None:
+        subset1_indices = order[0:split_at]
+        subset2_indices = order[split_at:n_examples]
+    else:
+        subset1_indices = list(range(0,split_at))
+        subset2_indices = list(range(split_at,n_examples))
+
+    subset1 = Subset(data_set, subset1_indices)
+    subset2 = Subset(data_set, subset2_indices)
+
+    return subset1, subset2
+
+
+
+# for i in range(len(train_dataset)):
+    # sample = train_dataset[i]
+    # print(i, sample['image'].size(), sample['hmap'].size())
+    # if i == 3:
+        # break
 
 num_epochs = 30000
-batch_size = 20
+batch_size = 10
 lr = 1e-3
 
-train_loader = DataLoader(train_dataset, batch_size=batch_size, \
-                        num_workers=4, shuffle=True)
-valid_loader = DataLoader(val_dataset, batch_size=batch_size, \
-                        num_workers=4)
 
 writer = SummaryWriter(tensorboard_file)
 
 
 model = Student().cuda()
-# model = Student2().cuda()
+# load_weights = './check_points/weights_800.pth'
+# model.load_state_dict(torch.load(load_weights))
+
+
+
 mse = nn.MSELoss().cuda()
 # criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 def train():
+    order = np.random.RandomState().permutation(len(labeled_dataset))
+    train_dataset, val_dataset = split_dataset(labeled_dataset, int(training_size), order)
+
     train_loader = DataLoader(train_dataset, batch_size=batch_size, \
-                        num_workers=4, shuffle=True)
-    # model.load_state_dict(torch.load(saved_weights))
+                            num_workers=4, shuffle=True)
+    valid_loader = DataLoader(val_dataset, batch_size=batch_size, \
+                            num_workers=4)
     max_total_acc_x = 0
     max_euclidean_distance = 99999
     for epoch in range(num_epochs):
@@ -61,14 +85,22 @@ def train():
         try:
             sample_batched= next(dataloader_iterator)
         except StopIteration:
+            order = np.random.RandomState().permutation(len(labeled_dataset))
+            train_dataset, val_dataset = split_dataset(labeled_dataset, int(training_size), order)
+
             train_loader = DataLoader(train_dataset, batch_size=batch_size, \
-                                num_workers=4, shuffle=True)
+                                    num_workers=4, shuffle=True)
+            valid_loader = DataLoader(val_dataset, batch_size=batch_size, \
+                                    num_workers=4)
+
             dataloader_iterator = iter(train_loader)
             sample_batched = next(dataloader_iterator)
 
         inputs = sample_batched['image'].cuda()
         labels = sample_batched['hmap'].cuda()
+        # set_trace()
         coors_bc = sample_batched['coor_bc'].cpu().detach().numpy()
+        # set_trace()
         # class_real = sample_batched['class_real'].cuda()
 
         img_names = sample_batched['img_name']
@@ -77,8 +109,8 @@ def train():
 
         optimizer.zero_grad()
         outputs = model(inputs)
-
-        loss = mse(outputs, labels)
+        # set_trace()
+        loss = mse(outputs.float(), labels.float())
 
         # loss_bce = nn.functional.binary_cross_entropy(class_pred, class_real)
         # loss = (1-class_real) * loss_bce + class_real * (l * loss_bce + (1-l)*loss_mse)

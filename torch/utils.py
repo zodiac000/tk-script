@@ -5,47 +5,124 @@ from skimage import io, transform
 import pandas as pd
 import os
 from PIL import Image
+from numpy import unravel_index
+from math import exp
+from random import random
+
 from pdb import set_trace
 
-
-
-def generate_heatmap(width, height, x_gt, y_gt):
-    x = np.zeros((width, height))
-    # x[int(x_gt)][int(y_gt)] = 1
+def grid_hmap(shape, x_gt, y_gt):
+    mask = np.zeros((shape, shape))
+    # mask[int(x_gt)][int(y_gt)] = 1
     # set_trace()
-    if x_gt > width or y_gt > height:
+    if x_gt > shape or y_gt > shape:
         print('invalid coordinates labels ---- {}, {}'.format(x_gt, y_gt))
+
+
     if x_gt > -1 and y_gt > -1:
-        x[int(y_gt), int(x_gt)] = 255
-    return x
+        size = 13
+        # mask[int(y_gt), int(x_gt)] = 255
+        #9x9
+        # for i in range(-4, 5):
+            # for j in range(-4,5):
+                # if abs(i) < 1 and abs(j) < 1:
+                    # mask[int(y_gt)+i, int(x_gt)+j] = 255
+                # else:
+                    # mask[int(y_gt)+i, int(x_gt)+j] = 255 - (i**2 + j**2)
+        #13x13
+        # for i in range(-6, 7):
+            # for j in range(-6,7):
+                # if abs(i) < 1 and abs(j) < 1:
+                    # mask[int(y_gt)+i, int(x_gt)+j] = 255
+                # else:
+                    # mask[int(y_gt)+i, int(x_gt)+j] = 255 - (i**2 + j**2)
+        # 17x17
+        # for i in range(-8, 9):
+            # for j in range(-10,11):
+                # if abs(i) < 2 and abs(j) < 2:
+                    # mask[int(y_gt)+i, int(x_gt)+j] = 255
+                # else:
+                    # mask[int(y_gt)+i, int(x_gt)+j] = 255 - (i**2 + j**2)
+        # 21x21
+        for i in range(-int(size/2), int(size/2)+1):
+            for j in range(-int(size/2), int(size/2)+1):
+                if abs(i) < 1 and abs(j) < 1:
+                    mask[int(y_gt)+i, int(x_gt)+j] = 255
+                else:
+                    try:
+                        mask[int(y_gt)+i, int(x_gt)+j] = 255 - (i**2 + j**2)
+                        # mask[int(y_gt)+i, int(x_gt)+j] = 255 - (i*5 + j*5)
+                    except:
+                        print(x_gt)
+                        print(y_gt)
 
-def generate_heatmap2(w, h, x_gt, y_gt):
-    x_range = np.arange(start=0, stop=w, dtype=int)
-    y_range = np.arange(start=0, stop=h, dtype=int)
-    xx, yy = np.meshgrid(x_range, y_range)
-    d2 = (xx - int(x_gt))**2 + (yy - int(y_gt))**2
-    sigma = 2
-    exponent = d2 / 2.0 / sigma / sigma
-    heatmap = np.exp(-exponent)
-    return heatmap
-
-def show_coordinate(image, coor):
-    """Show image with landmarks"""
-    plt.imshow(image)
-    plt.scatter(coor[:, 0], coor[:, 1], s=10, marker='.', c='r')
-    plt.pause(0.001)  # pause a bit so that plots are updated
+    return mask
 
 
-def matplotlib_imshow(img, one_channel=False):
-    if one_channel:
-        img = img.mean(dim=0)
-    img = img / 2 + 0.5
-    npimg = img.numpy()
-    if one_channel:
-        plt.imshow(npimg, cmap="Greys")
-    else:
-        plt.imshow(np.transpose(npimg, (1, 2, 0)))
+def gaussion_hmap(x, y, shape=224):
+    # Probability as a function of distance from the center derived
+    # from a gaussian distribution with mean = 0 and stdv = 1
+    scaledGaussian = lambda x : exp(-(1/2)*(x**2))
+    
+    isotropicMask = np.zeros((shape,shape))
+    # scalor = random()*3+1
+    scalor = 0.1
+    boundary = 6
+    x = int(x)
+    y = int(y)
+    
+    for j in range(max(0, int(x-boundary)), min(int(x+boundary+1), int(shape))):
+        for i in range(max(0, int(y-boundary)), min(int(y+boundary+1), int(shape))):
+            # find euclidian distance from center of image (shape/2,shape/2)
+            # and scale it to range of 0 to 2.5 as scaled Gaussian
+            # returns highest probability for x=0 and approximately
+            # zero probability for x > 2.5
+            distanceFromLabel = np.linalg.norm(np.array([i-y,j-x]))
+            distanceFromLabel = scalor * distanceFromLabel
+            scaledGaussianProb = scaledGaussian(distanceFromLabel)
+            isotropicMask[i,j] = np.clip(scaledGaussianProb*255,0,255)
+            
 
+
+    return np.round(isotropicMask)
+
+
+def heatmap_to_coor(nparray):
+    max = np.argmax(nparray)
+    y = max // nparray.shape[1]
+    x = max % nparray.shape[1]
+    # y, x = unravel_index(nparray.argmax(), nparray.shape)
+    return x, y
+
+def get_total_confidence(nparray):
+    x, y = heatmap_to_coor(nparray)
+    sum = []
+    n_1 = 0
+    n_2 = 0
+    n_3 = 0
+    n_4 = 0
+    n_5 = 0
+
+    for i in range(y-3, y+4):
+        for j in range(x-3, x+4):
+            if i in range(0, 223) and j in range(0, 223):
+                sum.append(nparray[i, j])
+            else:
+                sum.append(0)
+
+    for i in sum:
+        if i < 1e-1:
+            n_1 += 1
+        if i < 1e-2:
+            n_2 += 1
+        if i < 1e-3:
+            n_3 += 1
+        if i < 1e-4:
+            n_4 += 1
+        if i < 1e-5:
+            n_5 += 1
+
+    return [n_1, n_2, n_3, n_4, n_5]
 
 class CoorToHeatmap(object):
     """Convert coordinates to heatmap
@@ -64,23 +141,31 @@ class CoorToHeatmap(object):
         h, w = self.input_size
 
         coor = coor * [self.output_size / w, self.output_size / h]
+        coor = np.round(coor)
         
-        hmap = generate_heatmap(self.output_size, self.output_size, \
-                coor[0], coor[1])
+        # hmap = grid_hmap(self.output_size, coor[0], coor[1])
+        hmap = gaussion_hmap(coor[0], coor[1])
+
+
+        # print(unravel_index(hmap.argmax(), hmap.shape))
+        # print(hmap.max())
+        # i, j = unravel_index(hmap.argmax(), hmap.shape)
+        # print(hmap[i-10:i+10, j-10:j+10])
         # set_trace()
-        # y = y.reshape(1, h, w)
-        hmap = Image.fromarray(np.uint8(hmap))
-        # set_trace()
-        # return {'image': image, 'hmap': y}
+
+
+        # hmap = Image.fromarray(np.uint8(hmap))
         return hmap 
 
-def heatmap_to_coor(nparray):
-    max = np.argmax(nparray)
-    y = max // nparray.shape[1]
-    x = max % nparray.shape[1]
-    # set_trace()
-
-    return x, y
+def generate_heatmap2(w, h, x_gt, y_gt):
+    x_range = np.arange(start=0, stop=w, dtype=int)
+    y_range = np.arange(start=0, stop=h, dtype=int)
+    xx, yy = np.meshgrid(x_range, y_range)
+    d2 = (xx - int(x_gt))**2 + (yy - int(y_gt))**2
+    sigma = 2
+    exponent = d2 / 2.0 / sigma / sigma
+    heatmap = np.exp(-exponent)
+    return heatmap
 
 def accuracy_sum(outputs, labels):
     coor_outputs = []

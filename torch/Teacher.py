@@ -22,7 +22,7 @@ class Teacher(nn.Module):
                 nn.ReLU(),
                 nn.Conv2d(C, C, 3, padding=1),
                 # nn.BatchNorm2d(C),
-                nn.InstanceNorm2d(C, affine=False),
+                # nn.InstanceNorm2d(C, affine=False),
                 nn.ReLU(),
                 )
         self.enc2 = nn.Sequential(
@@ -30,7 +30,7 @@ class Teacher(nn.Module):
                 nn.ReLU(),
                 nn.Conv2d(2*C, 2*C, 3, padding=1),
                 # nn.BatchNorm2d(2*C),
-                nn.InstanceNorm2d(2*C, affine=False),
+                # nn.InstanceNorm2d(2*C, affine=False),
                 nn.ReLU(),
                 )
         self.enc3 = nn.Sequential(
@@ -40,7 +40,7 @@ class Teacher(nn.Module):
                 nn.ReLU(),
                 nn.Conv2d(4*C, 4*C, 3, padding=1),
                 # nn.BatchNorm2d(4*C),
-                nn.InstanceNorm2d(4*C, affine=False),
+                # nn.InstanceNorm2d(4*C, affine=False),
                 nn.ReLU(),
                 )
         self.enc4 = nn.Sequential(
@@ -50,7 +50,7 @@ class Teacher(nn.Module):
                 nn.ReLU(),
                 nn.Conv2d(8*C, 8*C, 3, padding=1),
                 # nn.BatchNorm2d(8*C),
-                nn.InstanceNorm2d(8*C, affine=False),
+                # nn.InstanceNorm2d(8*C, affine=False),
                 nn.ReLU(),
                 )
         self.enc5 = nn.Sequential(
@@ -60,7 +60,7 @@ class Teacher(nn.Module):
                 nn.ReLU(),
                 nn.Conv2d(8*C, 8*C, 3, padding=1),
                 # nn.BatchNorm2d(8*C),
-                nn.InstanceNorm2d(8*C, affine=False),
+                # nn.InstanceNorm2d(8*C, affine=False),
                 nn.ReLU(),
                 )
         # self.enc6 = nn.Sequential(

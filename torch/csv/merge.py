@@ -1,46 +1,37 @@
-with open("pass_images_7500.csv", 'r') as f:
-    file_bc = f.readlines()
+import numpy as np
+from pdb import set_trace
 
-    for i, line in enumerate(file_bc):
-        file_bc[i] = line.strip().split(',')
+a1 = []
+a2 = []
+a3 = []
+result = []
+number_of_valid_data = 6415
+with open ('pred_pass_valid_head_' + str(number_of_valid_data) + '_acc_x.csv', 'r') as f:
+    lines = f.readlines()
+    for line in lines:
+        a1.append(line.strip().split(','))
+    a1 = np.asarray(a1)
+
+with open ('pred_pass_valid_head_' + str(number_of_valid_data) + '_acc_y.csv', 'r') as f:
+    lines = f.readlines()
+    for line in lines:
+        a2.append(line.strip().split(','))
+    a2 = np.asarray(a2)
+    
+with open('pred_pass_valid_head_' + str(number_of_valid_data) + '_adv.csv', 'r') as f:
+    lines = f.readlines()
+    for line in lines:
+        a3.append(line.strip().split(','))
+    a3 = np.asarray(a3)
+
+for index, adv in enumerate(a3):
+    # if adv[0] == a1[index][0]:
+    result.append([a1[index][0], a1[index][1], a2[index][1], adv[1], adv[2], \
+                    a1[index][3], a1[index][4]])
+
+with open('merged_' + str(number_of_valid_data) + '.csv', 'w') as f:
+    for line in result:
+        f.write(','.join(line) + '\n')
 
 
-# print(file_bc)
-
-
-with open("pass_ad.csv", 'r') as f:
-    file_ad = f.readlines()
-
-    for i, line in enumerate(file_ad):
-        file_ad[i] = line.strip().split(',')
-
-
-# print(file_ad)
-
-ad_bc = []
-for i, line_bc in enumerate(file_bc):
-    temp = line_bc
-    for j, line_ad in enumerate(file_ad):
-        if line_bc[0] == line_ad[0]:
-            temp.append(line_ad[1])
-            temp.append(line_ad[2])
-            break
-
-    ad_bc.append(temp)
-
-
-
-# print(ad_bc)
-# from pdb import set_trace
-# set_trace()
-for i in ad_bc:
-    if len(i) < 5:
-        print(i)
-
-    if i[2] == '-1' or i[4] == '-1':
-        print(i)
-
-# with open("pass_ad_bc_7500.csv", "w") as f:
-    # for l in ad_bc:
-        # f.write(",".join(l) + '\n')
 
