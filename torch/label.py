@@ -20,7 +20,7 @@ class ImageLabel:
 
         self.top_10_pointer = 0
         self.top_10 = [262, 828, 842, 842, 545, 328, 747, 846, 324, 326]
-        self.saved_dict = "csv/saved_dict.csv"
+        self.saved_dict = "csv/pass_valid/pass_valid_7415.csv"
         self.coordinates = "csv/coordinates.txt"
         # self.pred_dict = "csv/pred_dict_4265.csv"
         # self.pred_dict = "csv/pred_dict_200.csv"
@@ -169,8 +169,8 @@ if __name__ == "__main__":
     il.pointer = int(pointer) if pointer != '' else il.pointer
     il.only_invalid = True if only_invalid.lower() == 'y' else False
     # il.load_dictionary_from_osdir("images", self.coordinates) # 1. load from original coodinates
-    # il.load_dictionary_from_dict(il.saved_dict) #-------------- 2. load from corrected local dictionary
-    il.load_dictionary_from_dict(il.pred_dict) # -----------------3. load from prediected dictionary
+    il.load_dictionary_from_dict(il.saved_dict) #-------------- 2. load from corrected local dictionary
+    # il.load_dictionary_from_dict(il.pred_dict) # -----------------3. load from prediected dictionary
     # il.load_dictionary_from_dict(il.pass_csv) # -----------------4. load from pass_images dictionary
 
     canvas = Canvas(il.root)

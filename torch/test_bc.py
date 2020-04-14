@@ -18,20 +18,17 @@ from tqdm import tqdm
 # file_to_read = './csv/all.csv'
 # file_to_write = "./csv/pred_all.csv"
 
-
 file_to_read = './csv/pass_valid_head_6415.csv'
 file_to_write = "./csv/pred_pass_valid_head_6415.csv"
 
+# file_to_read = './csv/1000.csv'
+# file_to_write = "./csv/1000pred.csv"
 
-
-# saved_weights = './check_points/weights_800.pth'
-saved_weights = './check_points/weights_1000+79.pth'
-
-
+saved_weights = './check_points/weights_50_6415.pth'
 
 batch_size = 4
 
-dataset = WeldingDatasetToTensor(csv_file=file_to_read, root_dir='./')
+dataset = WeldingDatasetToTensor(csv_file=file_to_read, data_root='all_images')
 
 
 valid_loader = DataLoader(dataset, batch_size=batch_size, \
@@ -41,75 +38,56 @@ model = Student().cuda()
 model.load_state_dict(torch.load(saved_weights))
 
 criterion = nn.MSELoss()
-# criterion = nn.CrossEntropyLoss()
-
-# Print model's state_dict
-# print("Model's state_dict:")
-# for param_tensor in model.state_dict():
-    # print(param_tensor, "\t", model.state_dict()[param_tensor].size())
-
 
 model.eval()
 valid_loss = 0
 f = open(file_to_write, "w")
-all_acc_x = []
-all_acc_y = []
 pbar = tqdm(total=len(valid_loader.dataset))
 with torch.no_grad():
-    total_acc_x = 0
-    total_acc_y = 0
-    e_distances = 0
     distances = []
+    accuracy = []
     for i, batch in enumerate(valid_loader):
         inputs = batch['image'].float().cuda()
         labels = batch['hmap'].float().cuda()
-        coors = batch['coor_bc'].numpy()
+        coors = batch['coor_1'].numpy()
         img_names = batch['img_name']
+        # origin_img = batch['origin_img']
+        # origin_shape = np.array(origin_img[0].cpu().detach().numpy().shape)
         outputs = model(inputs)
         valid_loss += criterion(outputs, labels)
         outputs = outputs.cpu().detach().numpy()
+
+
         for index, out in enumerate(outputs):
-            x, y = heatmap_to_coor(out.reshape(224, 224))
-            total_conf = get_total_confidence(out.reshape(224,224))
-            # mean_conf = np.asarray(total_conf).mean()
-            total_conf = ','.join(map(str, total_conf))
+            coor_pred = np.array(heatmap_to_coor(out.squeeze()))
+            coor_pred = (coor_pred * [1280/224, 1024/224]).astype(int)
+            coor_real = coors[index]
+            dist = np.sum((coor_pred - coor_real) ** 2) ** 0.5
+            acc = ([1, 1] - (np.absolute(coor_pred - coor_real) / [1280, 1024])) * 100
 
-            e_distance = np.sum((np.asarray([x, y]) * [1280/224, 1024/224] - coors[index]) ** 2, axis=0) ** 0.5
-
-            # e_distance = ((int(x/224*1280)-coors[index][0])**2 + \
-                            # (int(y/224*1024)-coors[index][1])**2)**0.5
-            # acc_x = abs(int(x/224*1280) - coors[index][0]) / 1280
-            # acc_y = abs(int(y/224*1024) - coors[index][1]) / 1024
             f.write(img_names[index]\
-                    # + ',' + str(coors[index][0]) \
-                    # + ',' + str(coors[index][1]) \
-                    + ',' + str(int(x / 224 * 1280)) \
-                    + ',' + str(int(y / 224 * 1024))\
-                    # + ',' + str(acc_x)\
-                    # + ',' + str(acc_y)\
-                    # + ',' + str(out.max()) \
-                    + ',' + str(e_distance)   \
-                    # + ',' + str(mean_conf)  \
-                    # + ',' + str(total_conf)\
+                    + ',' + str(coor_real[0]) \
+                    + ',' + str(coor_real[1]) \
+                    + ',' + str(coor_pred[0]) \
+                    + ',' + str(coor_pred[1])\
                     + '\n')
             # print("wrtie to file")
                     
-            distances.append(e_distance)
-            # e_distances += e_distance
+            distances.append(dist)
+            accuracy.append(acc)
+
             pbar.update()
 
-        # outputs = outputs.cpu().detach().numpy()
-        labels = labels.cpu().detach().numpy()
-        sum_acc_x, sum_acc_y, list_acc_x, list_acc_y = accuracy_sum(outputs, coors)
-        total_acc_x += sum_acc_x
-        total_acc_y += sum_acc_y
-        all_acc_x.extend(list_acc_x)
-        all_acc_y.extend(list_acc_y)
-        e_distances = np.asarray(distances)
+        
+    e_distances = np.asarray(distances)
+    accuracy = np.asarray(accuracy)
+    accuracy = np.mean(accuracy, axis=0)
+
+    
 
     print("=" * 30)
-    print("total acc_x = {:.10f}".format(total_acc_x/len(valid_loader.dataset)))
-    print("total acc_y = {:.10f}".format(total_acc_y/len(valid_loader.dataset)))
+    print("mean acc_x = {:.10f}".format(accuracy[0]))
+    print("mean acc_y = {:.10f}".format(accuracy[1]))
     print("Euclidean Distance: {}".format(np.mean(e_distances)))
     print("=" * 30)
 

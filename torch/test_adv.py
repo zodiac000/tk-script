@@ -23,7 +23,8 @@ file_to_write = "./csv/pred_pass_valid_head_6415_adv.csv"
 # file_to_write = "./csv/pred_pass_valid_6000_adv.csv"
 
 saved_weights_s = './check_points/weights_1000.pth'
-saved_weights_t = './check_points/weights_adv.pth'
+# saved_weights_t = './check_points/weights_adv_mse.pth'
+saved_weights_t = './check_points/weights_adv_bce.pth'
 
 
 batch_size = 20

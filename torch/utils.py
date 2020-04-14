@@ -278,14 +278,7 @@ def crop(image, w_center, h_center, coor, scale):
 
 
 if __name__ == "__main__":
-    n = 33
-    coor_frames = pd.read_csv('saved_dict.csv', header=None)
-    img_name = coor_frames.iloc[n, 0]
-    coor = coor_frames.iloc[n, 1:].as_matrix()
-    coor = coor.astype('float').reshape(-1, 2)
-       
-    plt.figure()
-    show_coordinate(io.imread(os.path.join('./images/', img_name)),
-		   coor)
-    plt.show()
 
+    hmap = gaussion_hmap(100,200)
+    
+    set_trace()

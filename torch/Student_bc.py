@@ -195,7 +195,7 @@ class Student(nn.Module):
         dfc3 = self.dec3(F.relu(dfc2+conv3))  #   -----------------------|    |     |
         dfc4 = self.dec2(F.relu(dfc3+conv2))  #   ----------------------------|     |  
         out = self.dec1(F.relu(dfc4+conv1))   #  -----------------------------------|
-        out = nn.Softmax(2)(out.view(-1, 1, 224*224)).view(-1, 1,224,224)
+        # out = nn.Softmax(2)(out.view(-1, 1, 224*224)).view(-1, 1,224,224)
 
         # flatten1 = torch.flatten(conv5, start_dim=1)
         # fc1_1 = F.relu(self.fc1_1(flatten1))

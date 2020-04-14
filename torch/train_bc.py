@@ -12,18 +12,22 @@ import math
 from utils import accuracy_sum, heatmap_to_coor, crop
 from torchvision.transforms import ToTensor, Resize
 from PIL import Image
+from torch.utils.data.dataset import Subset
 
 from torch.utils.data.dataset import Subset
 
-training_size = 800
-labeled_dataset = WeldingDatasetToTensor(csv_file='./csv/pass_valid_tail_1000.csv', \
+labeled_dataset = WeldingDatasetToTensor(data_root='all_images',\
+                                        csv_file='./csv/pass_valid_50_6415.csv', \
                                         root_dir='./')
-# train_dataset = WeldingDatasetToTensor(csv_file='./csv/pass_valid_tail_800.csv', \
-                                        # root_dir='./')
-# val_dataset = WeldingDatasetToTensor(csv_file='./csv/pass_valid_200.csv', root_dir='./')
-# val_dataset = WeldingDatasetToTensor(csv_file='./csv/pass_valid_1000+79_shuffle_valid.csv', root_dir='./')
-saved_weight_dir = './check_points/weights_1000.pth'
-tensorboard_file = 'runs/bc_' + str(training_size)
+
+
+#subset of the dataset
+# indices = list(range(len(labeled_dataset)//4))
+# labeled_dataset = Subset(labeled_dataset, indices)
+# train_loader = DataLoader(subset, batch_size=batch_size, shuffle=True)
+
+saved_weight_dir = './check_points/weights_50_6415.pth'
+# tensorboard_file = 'runs/bc_200'
 
 def split_dataset(data_set, split_at, order=None):
     n_examples = len(data_set)
@@ -45,20 +49,12 @@ def split_dataset(data_set, split_at, order=None):
 
     return subset1, subset2
 
-
-
-# for i in range(len(train_dataset)):
-    # sample = train_dataset[i]
-    # print(i, sample['image'].size(), sample['hmap'].size())
-    # if i == 3:
-        # break
-
 num_epochs = 30000
 batch_size = 10
-lr = 1e-3
+lr = 1e-4
+training_size = len(labeled_dataset)
 
-
-writer = SummaryWriter(tensorboard_file)
+# writer = SummaryWriter(tensorboard_file)
 
 
 model = Student().cuda()
@@ -71,9 +67,9 @@ mse = nn.MSELoss().cuda()
 # criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 def train():
+    #cross validation
     order = np.random.RandomState().permutation(len(labeled_dataset))
-    train_dataset, val_dataset = split_dataset(labeled_dataset, int(training_size), order)
-
+    train_dataset, val_dataset = split_dataset(labeled_dataset, int(training_size*0.9), order)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, \
                             num_workers=4, shuffle=True)
     valid_loader = DataLoader(val_dataset, batch_size=batch_size, \
@@ -86,7 +82,7 @@ def train():
             sample_batched= next(dataloader_iterator)
         except StopIteration:
             order = np.random.RandomState().permutation(len(labeled_dataset))
-            train_dataset, val_dataset = split_dataset(labeled_dataset, int(training_size), order)
+            train_dataset, val_dataset = split_dataset(labeled_dataset, int(training_size*0.9), order)
 
             train_loader = DataLoader(train_dataset, batch_size=batch_size, \
                                     num_workers=4, shuffle=True)
@@ -98,18 +94,14 @@ def train():
 
         inputs = sample_batched['image'].cuda()
         labels = sample_batched['hmap'].cuda()
-        # set_trace()
-        coors_bc = sample_batched['coor_bc'].cpu().detach().numpy()
-        # set_trace()
-        # class_real = sample_batched['class_real'].cuda()
+        coors_bc = sample_batched['coor_1'].cpu().detach().numpy()
 
-        img_names = sample_batched['img_name']
+        # img_names = sample_batched['img_name']
         origin_imgs = sample_batched['origin_img']
 
 
         optimizer.zero_grad()
         outputs = model(inputs)
-        # set_trace()
         loss = mse(outputs.float(), labels.float())
 
         # loss_bce = nn.functional.binary_cross_entropy(class_pred, class_real)
@@ -250,14 +242,14 @@ def train():
                     # i_batch * len(inputs),
                     # len(train_loader.dataset), 100. * i_batch / len(train_loader),
                     torch.mean(loss).item())) #/ len(inputs)))
-            writer.add_scalar("cascade4_training_loss", \
-                    torch.mean(loss).item(), #/ len(inputs), \
-                    epoch  + epoch * math.ceil(len(train_loader) / batch_size) \
-                    )
-            writer.add_scalar("cascade4_training_Euclidean_Distance", \
-                    e_distance, 
-                    epoch  + epoch * math.ceil(len(train_loader) / batch_size) \
-                    )
+            # writer.add_scalar("cascade4_training_loss", \
+                    # torch.mean(loss).item(), #/ len(inputs), \
+                    # epoch  + epoch * math.ceil(len(train_loader) / batch_size) \
+                    # )
+            # writer.add_scalar("cascade4_training_Euclidean_Distance", \
+                    # e_distance, 
+                    # epoch  + epoch * math.ceil(len(train_loader) / batch_size) \
+                    # )
 
 
         if (epoch+1) % 50 == 0:    # every 20 mini-batches...
@@ -270,7 +262,7 @@ def train():
                 for i, batch in enumerate(valid_loader):
                     inputs = batch['image'].float().cuda()
                     labels = batch['hmap'].float().cuda()
-                    coors_bc = batch['coor_bc'].cpu().detach().numpy()
+                    coors_bc = batch['coor_1'].cpu().detach().numpy()
 
                     outputs = model(inputs)
                     loss = mse(outputs, labels)
@@ -293,8 +285,8 @@ def train():
                 valid_loss = valid_loss / len(valid_loader)
                 print('Valid loss {}'.format(valid_loss))
 
-                writer.add_scalar("Valid_loss_adbc", valid_loss, epoch)
-                writer.add_scalar("Valid_adbc_Euclidean_Distance", e_distance/len(valid_loader.dataset), epoch)
+                # writer.add_scalar("Valid_loss_adbc", valid_loss, epoch)
+                # writer.add_scalar("Valid_adbc_Euclidean_Distance", e_distance/len(valid_loader.dataset), epoch)
 
                 print("=" * 30)
                 print("total acc_x = {:.10f}".format(total_acc_x/len(valid_loader.dataset)))

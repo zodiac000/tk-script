@@ -21,6 +21,7 @@ train_csv = './csv/pass_valid_tail_1000.csv'
 weight_to_load_student = './check_points/weights_1000.pth'
 # writer_teacher_dir = 'runs/adverserial_teacher_' + str(training_number)
 
+dir_weight = './check_points/weights_adv_bce.pth'
 
 # weight_to_load_teacher = './check_points/weights_adverserial_teacher_39.pth'
 # writer_student_dir = 'runs/adverserial_student_' + str(training_number)
@@ -37,12 +38,12 @@ teacher = Teacher().cuda()
 teacher.train()
 
 
-dist_lower_bound = 10.0
+dist_lower_bound = 20.0
 train_dataset = WeldingDatasetToTensor(csv_file=train_csv, root_dir='./', dist_lower_bound=dist_lower_bound)
 # valid_dataset = WeldingDatasetToTensor(csv_file=val_csv, root_dir='./')
 
 num_epochs = 1000000
-batch_size = 4
+batch_size = 1
 # batch_size_valid = 4
 lr_D = 1e-6
 lr_G = 1e-4
@@ -81,14 +82,9 @@ def train_gan():
         inputs = sample_batched['image']#.cuda()
         real_hmaps = sample_batched['hmap']#.cuda()
         coors_bc = sample_batched['coor_bc']
-        random_hmap1 = sample_batched['random_hmap1']
-        # random_coor1 = sample_batched['random_coor1']
-        random_hmap2 = sample_batched['random_hmap2']
-        # random_coor2 = sample_batched['random_coor2']
-        random_hmap3 = sample_batched['random_hmap3']
-        # random_coor3 = sample_batched['random_coor3']
-        # random_hmap4 = sample_batched['random_hmap4']
-        # random_coor4 = sample_batched['random_coor4']
+        random_hmaps_pseudo = sample_batched['random_hmaps_pseudo']
+        # random_coors = sample_batched['random_coors']
+        random_hmaps_real = sample_batched['random_hmaps_real']
         # inames = sample_batched['img_name']
 
 
@@ -98,9 +94,6 @@ def train_gan():
             input = input.cuda()
 
             pseudo_hmap = student(input.unsqueeze(0)).squeeze(0).detach().cpu().numpy()
-            # pseudo_hmap = spike(pseudo_hmap).cuda()
-            # real_hmap = spike(real_hmaps[idx]).cuda()
-            # pseudo_hmap = spike(pseudo_hmap) 
             _, y, x = np.unravel_index(pseudo_hmap.argmax(), pseudo_hmap.shape)
             pseudo_hmap = gaussion_hmap(x, y)
             pseudo_hmap = torch.from_numpy(pseudo_hmap)
@@ -114,17 +107,41 @@ def train_gan():
             x, y = heatmap_to_coor(pseudo_hmap.detach().cpu().numpy().reshape(224, 224))
             e_distance = ((int(x/224*1280) - coors_bc[idx][0].item())**2 + \
                          (int(y/224*1024)-coors_bc[idx][1].item())**2)**0.5   
-            if e_distance < dist_lower_bound:
-                real = torch.cat([real, pseudo]) 
-                # pseudo_first = torch.cat([input, spike(random_hmap1[idx]).cuda()], dim=0).unsqueeze(0)
-                # pseudo_second = torch.cat([input, spike(random_hmap2[idx]).cuda()], dim=0).unsqueeze(0)
-                pseudo_first = torch.cat([input, random_hmap1[idx].float().cuda()], dim=0).unsqueeze(0)
-                pseudo_second = torch.cat([input, random_hmap2[idx].float().cuda()], dim=0).unsqueeze(0)
-                pseudo_third = torch.cat([input, random_hmap3[idx].float().cuda()], dim=0).unsqueeze(0)
-                # pseudo_forth = torch.cat([input, random_hmap4[idx].float().cuda()], dim=0).unsqueeze(0)
-                # pseudo = torch.cat([pseudo_first, pseudo_second, pseudo_third, pseudo_forth]) 
-                pseudo = torch.cat([pseudo_first, pseudo_second, pseudo_third]) 
 
+
+            pseudo_1 = torch.cat([input, random_hmaps_pseudo[0][idx].float().cuda()], dim=0).unsqueeze(0)
+            pseudo_2 = torch.cat([input, random_hmaps_pseudo[1][idx].float().cuda()], dim=0).unsqueeze(0)
+            pseudo_3 = torch.cat([input, random_hmaps_pseudo[2][idx].float().cuda()], dim=0).unsqueeze(0)
+            pseudo_4 = torch.cat([input, random_hmaps_pseudo[3][idx].float().cuda()], dim=0).unsqueeze(0)
+            pseudo_5 = torch.cat([input, random_hmaps_pseudo[4][idx].float().cuda()], dim=0).unsqueeze(0)
+            pseudo_6 = torch.cat([input, random_hmaps_pseudo[5][idx].float().cuda()], dim=0).unsqueeze(0)
+            pseudo_7 = torch.cat([input, random_hmaps_pseudo[6][idx].float().cuda()], dim=0).unsqueeze(0)
+            pseudo_8 = torch.cat([input, random_hmaps_pseudo[7][idx].float().cuda()], dim=0).unsqueeze(0)
+            pseudo_9 = torch.cat([input, random_hmaps_pseudo[8][idx].float().cuda()], dim=0).unsqueeze(0)
+            pseudo_10 = torch.cat([input, random_hmaps_pseudo[9][idx].float().cuda()], dim=0).unsqueeze(0)
+
+            real_1 = torch.cat([input, random_hmaps_real[0][idx].float().cuda()], dim=0).unsqueeze(0)
+            real_2 = torch.cat([input, random_hmaps_real[1][idx].float().cuda()], dim=0).unsqueeze(0)
+            real_3 = torch.cat([input, random_hmaps_real[2][idx].float().cuda()], dim=0).unsqueeze(0)
+            real_4 = torch.cat([input, random_hmaps_real[3][idx].float().cuda()], dim=0).unsqueeze(0)
+            real_5 = torch.cat([input, random_hmaps_real[4][idx].float().cuda()], dim=0).unsqueeze(0)
+            real_6 = torch.cat([input, random_hmaps_real[5][idx].float().cuda()], dim=0).unsqueeze(0)
+            real_7 = torch.cat([input, random_hmaps_real[6][idx].float().cuda()], dim=0).unsqueeze(0)
+            real_8 = torch.cat([input, random_hmaps_real[7][idx].float().cuda()], dim=0).unsqueeze(0)
+            real_9 = torch.cat([input, random_hmaps_real[8][idx].float().cuda()], dim=0).unsqueeze(0)
+            real_10 = torch.cat([input, random_hmaps_real[9][idx].float().cuda()], dim=0).unsqueeze(0)
+
+            if e_distance < dist_lower_bound:
+                # real = torch.cat([real, pseudo]) 
+                pseudo = torch.cat([pseudo_1, pseudo_2, pseudo_3, pseudo_4, pseudo_4,  \
+                                pseudo_4, pseudo_4, pseudo_4, pseudo_4, pseudo_4,  ]) 
+                real = torch.cat([real, pseudo, real_1, real_2, real_3, real_4, real_4,  \
+                                real_4, real_4, real_4, real_4, real_4,  ]) 
+            else:
+                pseudo = torch.cat([pseudo, pseudo_1, pseudo_2, pseudo_3, pseudo_4, pseudo_4,  \
+                                pseudo_4, pseudo_4, pseudo_4, pseudo_4, pseudo_4,  ]) 
+                real = torch.cat([real, real_1, real_2, real_3, real_4, real_4,  \
+                                real_4, real_4, real_4, real_4, real_4,  ]) 
             try:
                 pseudo_batch = torch.cat([pseudo_batch, pseudo], dim=0)
                 real_batch = torch.cat([real_batch, real]) 
@@ -175,19 +192,18 @@ def train_gan():
                     # epoch * math.ceil(len(welding_train_loader) / batch_size) \
                     # )
 
-            writer_gan.add_scalar("advererial_gan_D_loss", \
+            writer_gan.add_scalar("adv_loss_bce", \
                     D_loss.item(), #/ len(inputs), \
                     epoch * math.ceil(len(welding_train_loader) / batch_size) \
                     )
 
-            writer_gan.add_scalar("adverserial_training_D_acc", \
+            writer_gan.add_scalar("adv_acc_bce", \
                     100 * correct / total, #/ len(inputs), \
                     epoch * math.ceil(len(welding_train_loader) / batch_size) \
                     )
             correct = 0 
             total = 0
         if (epoch+1) % 100 == 0:    # every 20 mini-batches...
-            dir_weight = './check_points/weights_adv.pth'
             torch.save(teacher.state_dict(), dir_weight)
             print('model saved to ' + dir_weight)
 
